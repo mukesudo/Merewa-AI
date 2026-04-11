@@ -1,0 +1,27 @@
+{
+  "name": "merewa-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "auth:migrate": "node ./scripts/migrate-auth.mjs"
+  },
+  "dependencies": {
+    "better-auth": "^1.6.2",
+    "lucide-react": "^1.8.0",
+    "next": "14.2.3",
+    "react": "^18",
+    "react-dom": "^18",
+    "zustand": "^4.5.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.0",
+    "typescript": "^5.9.3"
+  }
+}

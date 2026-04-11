@@ -1,0 +1,12 @@
+node_modules/
+.env
+.next/
+frontend/.next/
+frontend/node_modules/
+frontend/auth.db
+backend/venv/
+__pycache__/
+/.pnpm-store/
+*.pyc
+*.pyo
+*.DS_Store
