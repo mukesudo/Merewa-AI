@@ -1,0 +1,21 @@
+{
+  "name": "Merewa",
+  "short_name": "Merewa",
+  "description": "AI-powered voice social platform for Ethiopian language communities",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F0D15",
+  "theme_color": "#0F0D15",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
