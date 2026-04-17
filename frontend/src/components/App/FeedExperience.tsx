@@ -91,34 +91,12 @@ export default function FeedExperience({
   const activePosts = posts.length ? posts : fallbackPosts;
 
   return (
-    <div className="workspace-grid app-feed-grid">
-      <AiStudio
-        personalities={activePersonalities}
-        selectedPersona={selectedPersona}
-        topic={topic}
-        statusMessage={statusMessage}
-        isGenerating={isGenerating}
-        onSelectPersona={(value) => {
-          setSelectedPersona(value);
-          const selected = activePersonalities.find((persona) => persona.key === value);
-          if (selected) {
-            setTopic(selected.default_topics[0] ?? topic);
-          }
-        }}
-        onTopicChange={setTopic}
-        onGenerate={handleGenerate}
-        onRefresh={() => void refreshFeed()}
-      />
-
-      <section className="feed-stage">
-        <div className="feed-container">
-          {activePosts.map((post: Post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
-      </section>
-
-      <AudioRecorder />
-    </div>
+    <section className="feed-stage">
+      <div className="feed-container">
+        {activePosts.map((post: Post) => (
+          <PostCard key={post.id} post={post} />
+        ))}
+      </div>
+    </section>
   );
 }

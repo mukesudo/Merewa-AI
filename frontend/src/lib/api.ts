@@ -5,6 +5,7 @@ import type {
   FeedResponse,
   FollowMutationResponse,
   GeneratePostResponse,
+  GenerateScriptResponse,
   LikeMutationResponse,
   Personality,
   Post,
@@ -84,10 +85,22 @@ export function searchUsers(query: string): Promise<SearchUser[]> {
   return request<SearchUser[]>(`/users/search?q=${encodeURIComponent(query)}`);
 }
 
+export function searchPosts(query: string): Promise<Post[]> {
+  return request<Post[]>(`/posts/search?q=${encodeURIComponent(query)}`);
+}
+
 export function toggleFollow(username: string): Promise<FollowMutationResponse> {
   return request<FollowMutationResponse>(`/users/${username}/follow`, {
     method: "POST",
   });
+}
+
+export function fetchFollowers(username: string): Promise<SearchUser[]> {
+  return request<SearchUser[]>(`/users/${username}/followers`);
+}
+
+export function fetchFollowing(username: string): Promise<SearchUser[]> {
+  return request<SearchUser[]>(`/users/${username}/following`);
 }
 
 export function generateAiPost(payload: {
@@ -99,5 +112,35 @@ export function generateAiPost(payload: {
   return request<GeneratePostResponse>("/ai/generate-post", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export function generateScript(prompt: string, language: string): Promise<GenerateScriptResponse> {
+  return request<GenerateScriptResponse>("/ai/generate-script", {
+    method: "POST",
+    body: JSON.stringify({ prompt, language }),
+  });
+}
+
+export async function uploadMedia(blob: Blob): Promise<{ url: string }> {
+  const formData = new FormData();
+  formData.append("file", blob, "recording.webm");
+
+  const response = await fetch(`${API_BASE_URL}/upload`, {
+    method: "POST",
+    body: formData,
+    // Note: We don't set Content-Type header here because fetch sets it automatically with the boundary for FormData
+  });
+
+  if (!response.ok) {
+    throw new Error(`Upload failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export function deletePost(postId: number): Promise<{status: string}> {
+  return request<{status: string}>(`/posts/${postId}`, {
+    method: "DELETE",
   });
 }

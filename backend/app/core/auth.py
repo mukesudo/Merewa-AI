@@ -57,6 +57,8 @@ async def _sync_actor_from_headers(
     require_internal_request(request)
 
     external_auth_id = request.headers.get("x-auth-user-id")
+    header_email = request.headers.get("x-auth-email")
+    
     if not external_auth_id:
         if require_auth:
             raise HTTPException(
@@ -65,10 +67,19 @@ async def _sync_actor_from_headers(
             )
         return None
 
+    # 1. Find actor by external ID
     result = await db.execute(select(User).where(User.external_auth_id == external_auth_id))
     actor = result.scalar_one_or_none()
 
-    header_email = request.headers.get("x-auth-email")
+    # 2. If not found by ID, try finding by email to link accounts
+    if actor is None and header_email:
+        result = await db.execute(select(User).where(User.email == header_email))
+        actor = result.scalar_one_or_none()
+        if actor:
+            # Link this existing account to the new external ID
+            actor.external_auth_id = external_auth_id
+
+    # Sync metadata from headers
     header_name = request.headers.get("x-auth-name")
     header_image = request.headers.get("x-auth-image")
     header_username = request.headers.get("x-auth-username")
@@ -94,6 +105,10 @@ async def _sync_actor_from_headers(
         db.add(actor)
         changed = True
     else:
+        # Check for updates to existing user
+        if actor.external_auth_id != external_auth_id:
+            actor.external_auth_id = external_auth_id
+            changed = True
         if header_email and actor.email != header_email:
             actor.email = header_email
             changed = True
@@ -111,8 +126,12 @@ async def _sync_actor_from_headers(
             changed = True
 
     if changed:
-        await db.commit()
-        await db.refresh(actor)
+        try:
+            await db.commit()
+            await db.refresh(actor)
+        except Exception as exc:
+            await db.rollback()
+            raise HTTPException(status_code=500, detail=str(exc))
 
     return actor
 

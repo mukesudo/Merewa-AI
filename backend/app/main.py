@@ -4,8 +4,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
+from fastapi.staticfiles import StaticFiles
+import os
+from pathlib import Path
 
 from .core.config import get_settings
 from .database import AsyncSessionLocal, init_models
@@ -24,22 +27,32 @@ logger = logging.getLogger(__name__)
 
 async def _seed_defaults() -> None:
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(User).where(User.id == settings.default_viewer_id))
+        # 1. Seed the default tester user (Phase 2 local tester)
+        result = await session.execute(
+            select(User).where(
+                (User.id == settings.default_viewer_id) | (User.username == "tester")
+            )
+        )
         viewer = result.scalar_one_or_none()
         if viewer is None:
-            session.add(
-                User(
-                    id=settings.default_viewer_id,
-                    username="tester",
-                    display_name="Test User",
-                    bio="Phase 2 local tester account",
-                    preferred_language="am",
-                )
+            logger.info("Seeding default tester user...")
+            viewer = User(
+                id=settings.default_viewer_id,
+                username="tester",
+                display_name="Test User",
+                bio="Phase 2 local tester account",
+                preferred_language="am",
             )
+            session.add(viewer)
+            await session.flush()  # Get the ID if it was auto-generated or keep the fixed one
 
+        # 2. Seed AI Personas
         for persona in ALL_PERSONAS:
-            persona_result = await session.execute(select(User).where(User.persona_key == persona.key))
+            persona_result = await session.execute(
+                select(User).where(User.persona_key == persona.key)
+            )
             if persona_result.scalar_one_or_none() is None:
+                logger.info("Seeding persona: %s", persona.key)
                 session.add(
                     User(
                         username=persona.username,
@@ -53,37 +66,46 @@ async def _seed_defaults() -> None:
 
         await session.flush()
 
+        # 3. Seed demo posts if enabled and no posts exist
         if settings.auto_seed_demo_data:
-            post_result = await session.execute(select(Post.id).limit(1))
-            has_posts = post_result.scalar_one_or_none() is not None
-            if not has_posts:
-                viewer = await session.get(User, settings.default_viewer_id)
-                demo_posts = [
-                    Post(
-                        user_id=viewer.id,
-                        type="text",
-                        content="Selam Merewa. Phase 2 is live with ranked feeds, AI personas, and memory-backed replies.",
-                        language="en",
-                        origin="human",
-                    ),
-                    Post(
-                        user_id=(await session.execute(select(User.id).where(User.persona_key == "addis_taxi_driver"))).scalar_one(),
-                        type="text",
-                        content="አዲስ ትራፊክ ላይ ሁሉም ሰው ችግር እያለ ይናገራል፤ ግን መፍትሔ ሲመጣ ዝም ይላሉ። እኛ እዚህ በመረዋ እንነጋገርበት።",
-                        language="am",
-                        origin="ai",
-                        persona_key="addis_taxi_driver",
-                    ),
-                    Post(
-                        user_id=(await session.execute(select(User.id).where(User.persona_key == "habesha_mom"))).scalar_one(),
-                        type="text",
-                        content="Coffee is not just a drink, lijoch. It is where the real family updates and politics start.",
-                        language="en",
-                        origin="ai",
-                        persona_key="habesha_mom",
-                    ),
-                ]
-                session.add_all(demo_posts)
+            post_count_result = await session.execute(select(func.count(Post.id)))
+            post_count = post_count_result.scalar() or 0
+            if post_count == 0:
+                logger.info("Seeding demo posts...")
+                # Fetch persona user IDs fresh
+                async def _get_uid(key: str) -> int:
+                    r = await session.execute(select(User.id).where(User.persona_key == key))
+                    return r.scalar_one()
+
+                try:
+                    demo_posts = [
+                        Post(
+                            user_id=viewer.id,
+                            type="text",
+                            content="Selam Merewa. Phase 2 is live with ranked feeds, AI personas, and memory-backed replies.",
+                            language="en",
+                            origin="human",
+                        ),
+                        Post(
+                            user_id=await _get_uid("addis_taxi_driver"),
+                            type="text",
+                            content="አዲስ ትራፊክ ላይ ሁሉም ሰው ችግር እያለ ይናገራል፤ ግን መፍትሔ ሲመጣ ዝም ይላሉ። እኛ እዚህ በመረዋ እንነጋገርበት።",
+                            language="am",
+                            origin="ai",
+                            persona_key="addis_taxi_driver",
+                        ),
+                        Post(
+                            user_id=await _get_uid("habesha_mom"),
+                            type="text",
+                            content="Coffee is not just a drink, lijoch. It is where the real family updates and politics start.",
+                            language="en",
+                            origin="ai",
+                            persona_key="habesha_mom",
+                        ),
+                    ]
+                    session.add_all(demo_posts)
+                except Exception as e:
+                    logger.error("Failed to seed demo posts: %s", e)
 
         await session.commit()
 
@@ -107,7 +129,14 @@ async def lifespan(_: FastAPI):
     yield
 
 
+# Ensure uploads directory exists
+UPLOAD_DIR = Path(__file__).parent.parent / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
+
+# Mount static files for media uploads
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,

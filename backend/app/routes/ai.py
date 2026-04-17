@@ -15,6 +15,8 @@ from ..schemas import (
     GeneratePostResponse,
     GenerateReplyRequest,
     GenerateReplyResponse,
+    GenerateScriptRequest,
+    GenerateScriptResponse,
     Personality,
 )
 from ..services.feed import serialize_comment, serialize_post
@@ -199,3 +201,12 @@ async def daily_run(request: DailyRunRequest, db: AsyncSession = Depends(get_db)
         await rag_service.ingest_post(post)
 
     return DailyRunResponse(generated=[serialize_post(post, set()) for post in posts])
+
+
+@router.post("/generate-script", response_model=GenerateScriptResponse)
+async def generate_script(request: GenerateScriptRequest):
+    content = await ollama_service.generate_voice_script(
+        user_prompt=request.prompt,
+        language=request.language,
+    )
+    return GenerateScriptResponse(script=content, language=request.language)

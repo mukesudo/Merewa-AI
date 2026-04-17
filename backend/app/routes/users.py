@@ -226,3 +226,43 @@ async def toggle_follow_username(
         followee_id=target.id,
         followee_username=target.username,
     )
+
+
+@router.get("/users/{username}/followers", response_model=list[UserSummary])
+async def get_user_followers(
+    username: str,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.username == username))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    follower_alias = aliased(User)
+    followers_result = await db.execute(
+        select(follower_alias)
+        .join(Follow, Follow.follower_id == follower_alias.id)
+        .where(Follow.followee_id == user.id)
+        .order_by(follower_alias.username.asc())
+    )
+    return [UserSummary(**_serialize_summary(item)) for item in followers_result.scalars().all()]
+
+
+@router.get("/users/{username}/following", response_model=list[UserSummary])
+async def get_user_following(
+    username: str,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(User).where(User.username == username))
+    user = result.scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    following_alias = aliased(User)
+    following_result = await db.execute(
+        select(following_alias)
+        .join(Follow, Follow.followee_id == following_alias.id)
+        .where(Follow.follower_id == user.id)
+        .order_by(following_alias.username.asc())
+    )
+    return [UserSummary(**_serialize_summary(item)) for item in following_result.scalars().all()]

@@ -97,6 +97,9 @@ def rank_posts(posts: Sequence[Post], following_ids: Optional[Set[int]] = None):
     following_ids = following_ids or set()
     return sorted(
         posts,
-        key=lambda post: (calculate_feed_score(post, following_ids), post.created_at or datetime.min),
+        key=lambda post: (
+            calculate_feed_score(post, following_ids),
+            post.created_at or datetime.min.replace(tzinfo=timezone.utc),
+        ),
         reverse=True,
     )

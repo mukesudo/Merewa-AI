@@ -104,6 +104,11 @@ export interface GeneratePostResponse {
   post?: Post | null;
 }
 
+export interface GenerateScriptResponse {
+  script: string;
+  language: string;
+}
+
 export interface CommentMutationResponse {
   comment: Comment;
   ai_reply?: Comment | null;

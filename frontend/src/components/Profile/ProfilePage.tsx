@@ -8,6 +8,7 @@ import { toggleFollow } from "../../lib/api";
 import useStore from "../../store/useStore";
 import type { UserProfileResponse } from "../../types/api";
 import PostCard from "../Feed/Post";
+import Avatar from "../UI/Avatar";
 
 interface ProfilePageProps {
   initialProfile: UserProfileResponse;
@@ -18,7 +19,8 @@ export default function ProfilePage({ initialProfile }: ProfilePageProps) {
   const [profile, setProfile] = useState(initialProfile);
 
   const isSelf = currentUser?.user.username === profile.user.username;
-  const avatar = profile.user.avatar_url?.trim() || profile.user.username[0];
+
+  const showFollowLists = useStore((state) => state.showFollowLists);
 
   const onToggleFollow = async () => {
     const previous = profile.user.viewer_follows;
@@ -56,7 +58,7 @@ export default function ProfilePage({ initialProfile }: ProfilePageProps) {
   return (
     <div className="profile-grid">
       <section className="profile-hero glass-panel">
-        <div className="profile-avatar">{avatar}</div>
+        <Avatar src={profile.user.avatar_url} alt={profile.user.username} className="profile-avatar" />
         <div className="profile-copy">
           <span className="eyebrow">Profile</span>
           <h1>{profile.user.display_name ?? profile.user.username}</h1>
@@ -83,14 +85,14 @@ export default function ProfilePage({ initialProfile }: ProfilePageProps) {
               <strong>{profile.user.posts_count}</strong>
               <span>Posts</span>
             </div>
-            <div>
+            <Link href={`/profile/${profile.user.username}/followers`} className="stat-link" style={{ textDecoration: 'none', color: 'inherit' }}>
               <strong>{profile.user.followers_count}</strong>
               <span>Followers</span>
-            </div>
-            <div>
+            </Link>
+            <Link href={`/profile/${profile.user.username}/following`} className="stat-link" style={{ textDecoration: 'none', color: 'inherit' }}>
               <strong>{profile.user.following_count}</strong>
               <span>Following</span>
-            </div>
+            </Link>
           </div>
           {!isSelf ? (
             <button className={`btn ${profile.user.viewer_follows ? "btn-primary" : ""}`} onClick={() => void onToggleFollow()} type="button">
@@ -104,11 +106,10 @@ export default function ProfilePage({ initialProfile }: ProfilePageProps) {
         </div>
       </section>
 
-      <section className="profile-columns">
+      <section className="profile-columns" style={{ display: 'block' }}>
         <div className="profile-feed">
           <div className="section-header">
-            <span className="eyebrow">Recent posts</span>
-            <h2>What this profile is posting</h2>
+            <h2>Recent posts</h2>
           </div>
           {profile.recent_posts.length ? (
             profile.recent_posts.map((post) => <PostCard key={post.id} post={post} />)
@@ -117,42 +118,6 @@ export default function ProfilePage({ initialProfile }: ProfilePageProps) {
               <p>No posts yet.</p>
             </div>
           )}
-        </div>
-
-        <div className="profile-side-panels">
-          <div className="side-panel glass-panel">
-            <span className="eyebrow">Followers</span>
-            {profile.followers.length ? (
-              profile.followers.map((user) => (
-                <Link key={user.id} href={`/profile/${user.username}`} className="side-user">
-                  <div className="mini-avatar">{user.avatar_url?.trim() || user.username[0]}</div>
-                  <div>
-                    <strong>{user.display_name ?? user.username}</strong>
-                    <span>@{user.username}</span>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <p className="muted-text">No followers yet.</p>
-            )}
-          </div>
-
-          <div className="side-panel glass-panel">
-            <span className="eyebrow">Following</span>
-            {profile.following.length ? (
-              profile.following.map((user) => (
-                <Link key={user.id} href={`/profile/${user.username}`} className="side-user">
-                  <div className="mini-avatar">{user.avatar_url?.trim() || user.username[0]}</div>
-                  <div>
-                    <strong>{user.display_name ?? user.username}</strong>
-                    <span>@{user.username}</span>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <p className="muted-text">Not following anyone yet.</p>
-            )}
-          </div>
         </div>
       </section>
     </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { createPost } from "../../lib/api";
+import { createPost, uploadMedia } from "../../lib/api";
 import useStore from "../../store/useStore";
 import type { Post } from "../../types/api";
 
@@ -43,39 +43,24 @@ export default function AudioRecorder() {
 
       recorder.onstop = async () => {
         const audioBlob = new Blob(chunks, { type: "audio/webm" });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        const draftPost: Post = {
-          id: Date.now(),
-          type: "audio",
-          content: "New voice note",
-          media_url: audioUrl,
-          language: "am",
-          origin: "human",
-          author: currentUser?.user.username ?? "you",
-          author_id: currentUser?.user.id ?? 0,
-          author_display_name:
-            currentUser?.user.display_name ?? currentUser?.user.username ?? "You",
-          author_avatar_url: currentUser?.user.avatar_url ?? null,
-          author_is_ai: false,
-          like_count: 0,
-          comment_count: 0,
-          share_count: 0,
-          engagement_score: 1,
-          viewer_follows_author: false,
-          comments: [],
-        };
-
+        
         try {
+          // Upload the actual blob to the server
+          const { url: serverMediaUrl } = await uploadMedia(audioBlob);
+
           const savedPost = await createPost({
             type: "audio",
-            content: draftPost.content,
-            media_url: audioUrl,
-            language: draftPost.language,
+            content: "New voice note", // Defaults for now
+            media_url: serverMediaUrl,
+            language: "am",
             origin: "human",
           });
+          
           addPost(savedPost);
-        } catch {
-          addPost(draftPost);
+        } catch (error) {
+          console.error("Failed to upload or create post:", error);
+          // Fallback UI experience or local-only preview if desired
+          // For now, we just fail gracefully with a log
         }
 
         stream.getTracks().forEach((track) => track.stop());

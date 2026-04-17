@@ -1,15 +1,5 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BrainCircuit,
-  Languages,
-  Mic,
-  ShieldCheck,
-  Sparkles,
-  Users,
-} from "lucide-react";
-
-import { roadmapTasks } from "../../types/api";
+import { ArrowRight, BrainCircuit, Languages, Mic, Users } from "lucide-react";
 
 const featureCards = [
   {
@@ -32,122 +22,48 @@ const featureCards = [
     title: "Multilingual by design",
     detail: "Amharic and English surfaces wired into auth, profiles, and content generation.",
   },
-  {
-    icon: ShieldCheck,
-    title: "Privacy-aware architecture",
-    detail: "Better Auth in the app layer, FastAPI for product data and AI orchestration.",
-  },
-  {
-    icon: Sparkles,
-    title: "Phase-aware roadmap",
-    detail: "The landing page doubles as a product guide and a live implementation checklist.",
-  },
 ];
 
 export default function LandingPage() {
   return (
     <div className="landing-shell">
-      <section className="landing-hero">
-        <div className="hero-copy">
-          <span className="eyebrow">Merewa</span>
-          <h1>AI-powered voice social for Ethiopia, built for real local context.</h1>
-          <p>
-            Merewa combines Better Auth, a Next.js experience layer, and a
-            FastAPI intelligence backend to create a voice-first network where
-            human creators and AI personalities share one feed.
+      <section className="landing-hero" style={{ minHeight: '80vh', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="hero-copy" style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <span className="eyebrow" style={{ marginBottom: '1.5rem', display: 'block' }}>Welcome to Merewa</span>
+          <h1 style={{ fontSize: 'clamp(3rem, 6vw, 5rem)', marginBottom: '1.5rem' }}>The voice of Ethiopia.</h1>
+          <p style={{ fontSize: '1.2rem', marginBottom: '2.5rem', opacity: 0.9 }}>
+            Join a voice-first network where human creators and local AI personalities share one feed. Share your story in Amharic or English.
           </p>
-          <div className="hero-actions">
-            <Link href="/sign-up" className="btn btn-primary">
+          <div className="hero-actions" style={{ justifyContent: 'center', gap: '1.5rem' }}>
+            <Link href="/sign-up" className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem', borderRadius: '2rem' }}>
               Create account
-              <ArrowRight size={16} />
+              <ArrowRight size={20} />
             </Link>
-            <Link href="/sign-in" className="btn">
+            <Link href="/sign-in" className="btn" style={{ padding: '1rem 2rem', fontSize: '1.1rem', borderRadius: '2rem', background: 'rgba(255,255,255,0.05)' }}>
               Sign in
             </Link>
           </div>
         </div>
-
-        <div className="hero-panel glass-panel">
-          <span className="eyebrow">What ships in this stage</span>
-          <ul className="feature-list">
-            <li>Email, username, Google, and GitHub auth flows via Better Auth</li>
-            <li>Profiles, follower logic, search, and settings synced into FastAPI</li>
-            <li>Ranked voice feed, AI persona publishing, and profile-driven navigation</li>
-            <li>Documented architecture and a task list baked into the product surface</li>
-          </ul>
-        </div>
       </section>
 
-      <section className="landing-section">
-        <div className="section-header">
-          <span className="eyebrow">Feature overview</span>
-          <h2>Why this app feels different</h2>
+      <section className="landing-section" style={{ padding: '4rem 0', maxWidth: '1000px', margin: '0 auto' }}>
+        <div className="section-header" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <span className="eyebrow">Features</span>
+          <h2>Why Merewa?</h2>
         </div>
-        <div className="landing-card-grid">
+        <div className="landing-card-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
           {featureCards.map((feature) => {
             const Icon = feature.icon;
             return (
-              <article key={feature.title} className="landing-card glass-panel">
-                <Icon size={22} />
-                <h3>{feature.title}</h3>
-                <p>{feature.detail}</p>
+              <article key={feature.title} className="landing-card glass-panel" style={{ padding: '2rem', textAlign: 'center', borderRadius: '1.5rem' }}>
+                <div style={{ display: 'inline-flex', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', marginBottom: '1rem', color: 'var(--accent-green)' }}>
+                  <Icon size={28} />
+                </div>
+                <h3 style={{ marginBottom: '0.8rem', fontSize: '1.2rem' }}>{feature.title}</h3>
+                <p style={{ fontSize: '0.95rem' }}>{feature.detail}</p>
               </article>
             );
           })}
-        </div>
-      </section>
-
-      <section className="landing-section architecture-block glass-panel">
-        <div className="section-header">
-          <span className="eyebrow">Architecture</span>
-          <h2>Current delivery model</h2>
-        </div>
-        <div className="doc-grid">
-          <div>
-            <h3>Experience layer</h3>
-            <p>
-              Next.js 14 handles the landing page, authenticated app shell, Better
-              Auth UI, and a secured proxy route into the Python backend.
-            </p>
-          </div>
-          <div>
-            <h3>Auth boundary</h3>
-            <p>
-              Better Auth manages credential and social sign-in, sessions,
-              username sign-in, and profile fields that mirror into product data.
-            </p>
-          </div>
-          <div>
-            <h3>Product backend</h3>
-            <p>
-              FastAPI owns feed ranking, profile graphs, AI routes, RAG memory,
-              and Celery-based automation scaffolding.
-            </p>
-          </div>
-          <div>
-            <h3>Why it matters</h3>
-            <p>
-              The result is a clean split: identity in the app layer, product and
-              intelligence in Python, and a single UI that makes that split
-              invisible to the user.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="landing-section">
-        <div className="section-header">
-          <span className="eyebrow">Todo board</span>
-          <h2>Implementation task list</h2>
-        </div>
-        <div className="todo-grid">
-          {roadmapTasks.map((task) => (
-            <article key={task.title} className={`todo-card ${task.status} glass-panel`}>
-              <span className="todo-state">{task.status}</span>
-              <h3>{task.title}</h3>
-              <p>{task.detail}</p>
-            </article>
-          ))}
         </div>
       </section>
     </div>

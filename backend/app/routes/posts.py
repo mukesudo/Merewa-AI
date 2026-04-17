@@ -1,6 +1,9 @@
-from typing import Optional
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile
+import uuid
+import shutil
+from pathlib import Path
 from sqlalchemy import delete, desc, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -230,5 +233,84 @@ async def toggle_like(
         await db.execute(delete(Interaction).where(Interaction.id == like.id))
         post.like_count = max(0, post.like_count - 1)
 
+
+@router.post("/upload")
+async def upload_media(
+    file: UploadFile = File(...),
+    actor: User = Depends(get_current_actor),
+):
+    # Verify file type
+    if not file.content_type or not file.content_type.startswith("audio/"):
+        # We allow webm specifically for Merewa voice posts
+        if "audio" not in file.content_type and "webm" not in file.content_type:
+             raise HTTPException(status_code=400, detail="Only audio files are allowed")
+
+    # Ensure upload directory exists
+    upload_dir = Path(__file__).parent.parent.parent / "uploads"
+    upload_dir.mkdir(exist_ok=True)
+
+    # Generate unique filename
+    file_extension = Path(file.filename).suffix if file.filename else ".webm"
+    if not file_extension:
+        file_extension = ".webm"
+        
+    safe_filename = f"{uuid.uuid4()}{file_extension}"
+    file_path = upload_dir / safe_filename
+
+    # Save file
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+        
+    return {"url": f"/uploads/{safe_filename}"}
+
+@router.delete("/posts/{post_id}")
+async def delete_post(
+    post_id: int,
+    actor: User = Depends(get_current_actor),
+    db: AsyncSession = Depends(get_db),
+):
+    post = await db.get(Post, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+        
+    if post.user_id != actor.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this post")
+        
+    await db.execute(delete(Post).where(Post.id == post_id))
     await db.commit()
-    return LikeMutationResponse(liked=liked, like_count=post.like_count)
+    return {"status": "ok"}
+
+
+@router.get("/search", response_model=List[PostRead])
+async def search_posts(
+    q: str = Query(..., min_length=1),
+    actor: Optional[User] = Depends(get_optional_actor),
+    db: AsyncSession = Depends(get_db),
+):
+    # Perform RAG search
+    search_results = await rag_service.search(query=q, db=db, limit=20)
+    
+    # Extract post IDs
+    post_ids = [res["post_id"] for res in search_results]
+    if not post_ids:
+        return []
+
+    # Load hydrated posts
+    viewer_id = actor.id if actor is not None else None
+    following_ids = await _following_ids(db, viewer_id)
+    
+    result = await db.execute(
+        select(Post)
+        .options(
+            selectinload(Post.author),
+            selectinload(Post.interactions).selectinload(Interaction.user),
+        )
+        .where(Post.id.in_(post_ids))
+    )
+    posts = result.scalars().unique().all()
+    
+    # Sort by original search score (preserving semantic rank)
+    score_map = {res["post_id"]: res["score"] for res in search_results}
+    sorted_posts = sorted(posts, key=lambda p: score_map.get(p.id, 0), reverse=True)
+    
+    return [serialize_post(p, following_ids) for p in sorted_posts]

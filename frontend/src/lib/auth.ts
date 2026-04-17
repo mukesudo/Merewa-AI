@@ -32,7 +32,7 @@ export const auth = betterAuth({
   secret:
     process.env.BETTER_AUTH_SECRET ??
     "merewa-local-secret-please-change-in-production",
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3000",
+  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
   database: authDatabase,
   emailAndPassword: {
     enabled: true,

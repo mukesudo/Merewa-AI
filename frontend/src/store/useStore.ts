@@ -8,6 +8,8 @@ interface AppState {
   personalities: Personality[];
   isRecording: boolean;
   statusMessage: string | null;
+  theme: "light" | "dark" | "system";
+  showFollowLists: boolean;
   setCurrentUser: (profile: UserProfileResponse | null) => void;
   setPosts: (posts: Post[]) => void;
   addPost: (post: Post) => void;
@@ -15,6 +17,8 @@ interface AppState {
   setPersonalities: (personalities: Personality[]) => void;
   setIsRecording: (value: boolean) => void;
   setStatusMessage: (value: string | null) => void;
+  setTheme: (theme: "light" | "dark" | "system") => void;
+  setShowFollowLists: (value: boolean) => void;
 }
 
 const useStore = create<AppState>((set) => ({
@@ -23,6 +27,8 @@ const useStore = create<AppState>((set) => ({
   personalities: [],
   isRecording: false,
   statusMessage: null,
+  theme: "system",
+  showFollowLists: typeof window !== 'undefined' ? localStorage.getItem('merewa-show-follows') !== 'false' : true,
   setCurrentUser: (profile) => set({ currentUser: profile }),
   setPosts: (posts) => set({ posts }),
   addPost: (post) => set((state) => ({ posts: [post, ...state.posts] })),
@@ -33,6 +39,11 @@ const useStore = create<AppState>((set) => ({
   setPersonalities: (personalities) => set({ personalities }),
   setIsRecording: (value) => set({ isRecording: value }),
   setStatusMessage: (value) => set({ statusMessage: value }),
+  setTheme: (theme) => set({ theme }),
+  setShowFollowLists: (value) => {
+    localStorage.setItem('merewa-show-follows', String(value));
+    set({ showFollowLists: value });
+  },
 }));
 
 export default useStore;

@@ -1,4 +1,5 @@
 from celery import Celery
+from celery.schedules import crontab
 
 from ..core.config import get_settings
 
@@ -17,4 +18,11 @@ celery_app.conf.update(
     result_serializer="json",
     timezone="Africa/Addis_Ababa",
     enable_utc=True,
+    beat_schedule={
+        "daily-ai-generation": {
+            "task": "merewa.generate_daily_ai_posts",
+            "schedule": crontab(hour=8, minute=0),  # Run every day at 8:00 AM local time
+            "kwargs": {"language": "am"},
+        }
+    }
 )

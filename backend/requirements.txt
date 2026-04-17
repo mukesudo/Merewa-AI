@@ -8,3 +8,4 @@ weaviate-client==4.4.1
 celery==5.3.6
 redis==5.0.1
 requests==2.31.0
+python-multipart==0.0.9

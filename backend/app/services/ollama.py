@@ -39,6 +39,20 @@ class OllamaService:
         fallback = self._fallback_reply(persona, comment, language)
         return await self._generate(prompt=prompt, fallback=fallback)
 
+    async def generate_voice_script(self, user_prompt: str, language: str) -> str:
+        prompt = (
+            f"You are a creative social media assistant for Merewa, a voice-first social app.\n"
+            f"Write a short, engaging script (2-4 sentences) for a user to record as a voice post.\n"
+            f"Language: {language}\n"
+            f"Topic/Prompt: {user_prompt}\n\n"
+            f"Constraints:\n"
+            f"- Sound natural and conversational, as if spoken by a person.\n"
+            f"- Do not include any stage directions like [Action] or (Laughs).\n"
+            f"- Just the spoken words.\n"
+            f"- No hashtags."
+        )
+        return await self._generate(prompt=prompt, fallback=user_prompt)
+
     async def _generate(self, prompt: str, fallback: str) -> str:
         try:
             return await asyncio.to_thread(self._request_ollama, prompt)

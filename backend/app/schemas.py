@@ -188,3 +188,13 @@ class UserProfileResponse(BaseModel):
     recent_posts: List[PostRead] = Field(default_factory=list)
     followers: List[UserSummary] = Field(default_factory=list)
     following: List[UserSummary] = Field(default_factory=list)
+
+
+class GenerateScriptRequest(BaseModel):
+    prompt: str
+    language: str = "am"
+
+
+class GenerateScriptResponse(BaseModel):
+    script: str
+    language: str

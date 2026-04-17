@@ -5,17 +5,24 @@ import { useEffect, useRef, useState } from "react";
 interface AudioPlayerProps {
   url: string;
   autoPlay?: boolean;
+  onPlayStateChange?: (isPlaying: boolean) => void;
 }
 
 export default function AudioPlayer({
   url,
   autoPlay = false,
+  onPlayStateChange,
 }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const updatePlayState = (playing: boolean) => {
+    setIsPlaying(playing);
+    onPlayStateChange?.(playing);
+  };
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -24,12 +31,15 @@ export default function AudioPlayer({
     }
 
     if (autoPlay) {
-      void audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      void audio
+        .play()
+        .then(() => updatePlayState(true))
+        .catch(() => updatePlayState(false));
       return;
     }
 
     audio.pause();
-    setIsPlaying(false);
+    updatePlayState(false);
   }, [autoPlay]);
 
   const togglePlay = () => {
@@ -40,12 +50,12 @@ export default function AudioPlayer({
 
     if (isPlaying) {
       audio.pause();
-      setIsPlaying(false);
+      updatePlayState(false);
       return;
     }
 
     void audio.play();
-    setIsPlaying(true);
+    updatePlayState(true);
   };
 
   const handleTimeUpdate = () => {
@@ -83,7 +93,7 @@ export default function AudioPlayer({
         ref={audioRef}
         src={url}
         onEnded={() => {
-          setIsPlaying(false);
+          updatePlayState(false);
           setProgress(0);
           setCurrentTime(0);
         }}
