@@ -21,8 +21,6 @@ export default function Post({ post }: PostProps) {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.like_count);
   const [showComments, setShowComments] = useState(false);
-  const [commentMode, setCommentMode] = useState<"text" | "voice">("text");
-  const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<Comment[]>(post.comments || []);
   const [following, setFollowing] = useState(post.viewer_follows_author);
   const [isInView, setIsInView] = useState(false);
@@ -84,13 +82,11 @@ export default function Post({ post }: PostProps) {
     }
   };
 
-  const handleCommentSubmit = async (customUrl?: string | null) => {
-    if (commentMode === "text" && !commentText.trim()) return;
-
+  const handleCommentSubmit = async (customUrl: string) => {
     const payload = {
-      content: customUrl ? "Voice comment" : commentText,
+      content: "Voice comment",
       media_url: customUrl,
-      type: customUrl ? "voice" : "text",
+      type: "voice",
       language: "am",
       auto_reply: true,
     };
@@ -98,19 +94,17 @@ export default function Post({ post }: PostProps) {
     try {
       const response = await createComment(post.id, payload);
       setComments((v) => [...v, response.comment]);
-      setCommentText("");
     } catch {
       const fallback: Comment = {
         id: Date.now(),
         type: payload.type as any,
         content: payload.content,
-        media_url: customUrl ?? undefined,
+        media_url: customUrl,
         author: currentUser?.user.username ?? "you",
         author_id: currentUser?.user.id ?? 0,
         language: "am",
       };
       setComments((v) => [...v, fallback]);
-      setCommentText("");
     }
   };
 
@@ -209,28 +203,14 @@ export default function Post({ post }: PostProps) {
             )) : <p className="muted-text">No comments yet.</p>}
           </div>
 
-          <div className="comment-input-zone">
-            {commentMode === "text" ? (
-              <div className="stack-inline">
-                <input 
-                  className="creator-input" 
-                  style={{ minHeight: '40px', margin: 0 }}
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Amharic or English..."
-                />
-                <button className="btn btn-primary" onClick={() => void handleCommentSubmit()}>Send</button>
-              </div>
-            ) : (
-                <button className={`btn ${isRecordingComment ? "btn-primary" : ""}`} onClick={isRecordingComment ? stopVoiceComment : startVoiceComment}>
-                    {isRecordingComment ? "Stop & Post" : "Record voice comment"}
-                </button>
-            )}
-            <div className="stack-inline" style={{ marginTop: '0.5rem' }}>
-                 <button className="btn btn-ghost" onClick={() => setCommentMode(commentMode === "text" ? "voice" : "text")}>
-                    Switch to {commentMode === "text" ? "Voice" : "Text"}
-                 </button>
-            </div>
+          <div className="comment-input-zone" style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+            <button 
+              className={`btn ${isRecordingComment ? "btn-primary" : ""}`} 
+              onClick={isRecordingComment ? stopVoiceComment : startVoiceComment}
+              style={{ width: '100%', padding: '1rem', borderRadius: '1rem', fontSize: '1.1rem' }}
+            >
+              {isRecordingComment ? "Stop & Post" : "Record voice comment"}
+            </button>
           </div>
         </section>
       )}
