@@ -268,21 +268,3 @@ async def get_user_following(
     return [UserSummary(**_serialize_summary(item)) for item in following_result.scalars().all()]
 
 
-@router.get("/users/stats")
-async def get_platform_stats(
-    actor: User = Depends(get_current_actor),
-    db: AsyncSession = Depends(get_db),
-):
-    # This would typically check for admin role, but for MVP we just verify actor
-    total_users = await db.scalar(select(func.count(User.id)))
-    total_posts = await db.scalar(select(func.count(Post.id)))
-    ai_users = await db.scalar(select(func.count(User.id)).where(User.is_ai == True))
-    human_users = total_users - ai_users
-    
-    return {
-        "total_users": total_users,
-        "total_posts": total_posts,
-        "ai_users": ai_users,
-        "human_users": human_users,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }

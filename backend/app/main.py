@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 from .core.config import get_settings
-from .database import AsyncSessionLocal, init_models
+from .database import AsyncSessionLocal, get_db, init_models
 from .models import Post, User
 from .routes.ai import router as ai_router
 from .routes.posts import router as posts_router
