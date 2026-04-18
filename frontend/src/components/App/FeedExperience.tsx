@@ -13,7 +13,6 @@ import type {
 import { fallbackPersonalities, fallbackPosts } from "../../types/api";
 import AudioRecorder from "../Feed/AudioRecorder";
 import PostCard from "../Feed/Post";
-import AiStudio from "../UI/AiStudio";
 
 interface FeedExperienceProps {
   initialFeed: FeedResponse;
@@ -35,12 +34,6 @@ export default function FeedExperience({
   const statusMessage = useStore((state) => state.statusMessage);
   const setStatusMessage = useStore((state) => state.setStatusMessage);
 
-  const [selectedPersona, setSelectedPersona] = useState(
-    initialPersonalities[0]?.key ?? "addis_taxi_driver",
-  );
-  const [topic, setTopic] = useState(
-    initialPersonalities[0]?.default_topics[0] ?? "Addis traffic",
-  );
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
@@ -61,33 +54,7 @@ export default function FeedExperience({
     }
   };
 
-  const handleGenerate = () => {
-    setIsGenerating(true);
-    startTransition(() => {
-      void generateAiPost({
-        persona_key: selectedPersona,
-        topic,
-        language: currentUser.user.preferred_language,
-        publish: true,
-      })
-        .then((response) => {
-          if (response.post) {
-            addPost(response.post);
-          }
-          setStatusMessage(
-            `Generated a new ${response.persona.display_name} post with RAG context.`,
-          );
-        })
-        .catch(() => {
-          setStatusMessage("AI generation is offline. Ollama and the FastAPI route need to be running.");
-        })
-        .finally(() => setIsGenerating(false));
-    });
-  };
 
-  const activePersonalities = personalities.length
-    ? personalities
-    : fallbackPersonalities;
   const activePosts = posts.length ? posts : fallbackPosts;
 
   return (
@@ -100,17 +67,6 @@ export default function FeedExperience({
         </div>
       </section>
 
-      <AiStudio
-        personalities={activePersonalities}
-        selectedPersona={selectedPersona}
-        topic={topic}
-        statusMessage={statusMessage}
-        isGenerating={isGenerating}
-        onSelectPersona={setSelectedPersona}
-        onTopicChange={setTopic}
-        onGenerate={handleGenerate}
-        onRefresh={() => void refreshFeed()}
-      />
     </div>
   );
 }

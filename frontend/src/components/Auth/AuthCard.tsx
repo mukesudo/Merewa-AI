@@ -179,11 +179,11 @@ export default function AuthCard({ mode }: AuthCardProps) {
   return (
     <section className="auth-card glass-panel">
       <div className="auth-copy">
-        <span className="eyebrow">Authentication</span>
+        <span className="eyebrow eyebrow-accent-green">Secure Login</span>
         <h1>{title}</h1>
         <p>
-          Better Auth powers email, username, and social sign-in while the
-          FastAPI backend handles profiles, feed ranking, AI, and followers.
+          Welcome to the first AI-powered voice social network built for the Ethiopian community. 
+          Connect with creators and explorers in a secure, localized environment.
         </p>
       </div>
 
