@@ -61,6 +61,7 @@ export function createComment(
 export function toggleLike(postId: number): Promise<LikeMutationResponse> {
   return request<LikeMutationResponse>(`/posts/${postId}/like`, {
     method: "POST",
+    body: JSON.stringify({}),
   });
 }
 
@@ -92,6 +93,7 @@ export function searchPosts(query: string): Promise<Post[]> {
 export function toggleFollow(username: string): Promise<FollowMutationResponse> {
   return request<FollowMutationResponse>(`/users/${username}/follow`, {
     method: "POST",
+    body: JSON.stringify({}),
   });
 }
 

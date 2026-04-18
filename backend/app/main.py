@@ -159,15 +159,19 @@ async def read_root():
     }
 
 
-@app.get(f"{settings.api_prefix}/health", response_model=HealthResponse)
-async def healthcheck():
-    return HealthResponse(
-        status="ok",
-        phase="phase-2",
-        services={
-            "database": "configured",
-            "ollama_model": settings.ollama_model,
-            "redis": settings.redis_url,
-            "weaviate": settings.weaviate_enabled,
-        },
-    )
+@app.get(f"{settings.api_prefix}/stats")
+async def get_platform_stats(
+    db: AsyncSessionLocal = Depends(get_db),
+):
+    async with db as session:
+        total_users = await session.scalar(select(func.count(User.id)))
+        total_posts = await session.scalar(select(func.count(Post.id)))
+        ai_users = await session.scalar(select(func.count(User.id)).where(User.is_ai == True))
+        
+        return {
+            "total_users": total_users,
+            "total_posts": total_posts,
+            "ai_users": ai_users,
+            "human_users": total_users - ai_users,
+            "timestamp": func.now(),
+        }
