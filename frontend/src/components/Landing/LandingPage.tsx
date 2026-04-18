@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, BrainCircuit, Languages, Mic, Users } from "lucide-react";
 import { useI18n } from "../../lib/i18n";
@@ -27,12 +28,18 @@ const featureCards = [
   },
 ];
 
-
 export default function LandingPage() {
   const { t } = useI18n();
 
   return (
     <div className="landing-shell">
+      <nav className="landing-nav">
+        <Link href="/" className="landing-logo">
+          <Image src="/icon.png" alt="Merewa Logo" width={40} height={40} className="logo-img" />
+          <span className="logo-text">Merewa</span>
+        </Link>
+      </nav>
+      
       <section className="landing-hero landing-hero-centered">
         <div className="hero-copy landing-copy floating">
           <span className="eyebrow eyebrow-block aura-text">{t("welcome")}</span>

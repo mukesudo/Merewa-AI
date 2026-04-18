@@ -459,14 +459,42 @@ textarea:disabled {
 .landing-shell {
   max-width: var(--content-max);
   margin: 0 auto;
+  min-height: 100vh;
+  background: 
+    radial-gradient(circle at 0% 0%, rgba(74, 193, 127, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(74, 193, 127, 0.08) 0%, transparent 40%);
+}
+
+.landing-nav {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 1.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.landing-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--text-main);
+  font-family: var(--font-display);
+}
+
+.logo-img {
+  border-radius: 20%;
 }
 
 .landing-hero {
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 26rem);
-  gap: 1.25rem;
+  min-height: 80vh;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  padding-bottom: 4rem;
 }
 
 .hero-copy h1,
