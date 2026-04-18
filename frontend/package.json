@@ -11,6 +11,8 @@
     "auth:migrate": "node ./scripts/migrate-auth.mjs"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "better-auth": "^1.6.2",
     "lucide-react": "^1.8.0",
     "next": "14.2.3",

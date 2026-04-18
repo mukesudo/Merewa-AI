@@ -1,38 +1,26 @@
 import type { MetadataRoute } from "next";
 
-const BASE_URL = process.env.NEXT_PUBLIC_BETTER_AUTH_URL ?? "https://merewa.app";
-
 export default function sitemap(): MetadataRoute.Sitemap {
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://merewa.vercel.app";
+
   return [
     {
-      url: BASE_URL,
+      url: APP_URL,
       lastModified: new Date(),
-      changeFrequency: "weekly",
+      changeFrequency: "daily",
       priority: 1,
     },
     {
-      url: `${BASE_URL}/sign-in`,
+      url: `${APP_URL}/feed`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: "always",
       priority: 0.8,
     },
     {
-      url: `${BASE_URL}/sign-up`,
+      url: `${APP_URL}/search`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: `${BASE_URL}/feed`,
-      lastModified: new Date(),
-      changeFrequency: "hourly",
-      priority: 0.9,
-    },
-    {
-      url: `${BASE_URL}/search`,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 0.7,
+      changeFrequency: "weekly",
+      priority: 0.5,
     },
   ];
 }

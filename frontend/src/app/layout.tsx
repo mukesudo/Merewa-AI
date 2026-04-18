@@ -1,13 +1,15 @@
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import "./globals.css";
 import ThemeProvider from "../components/UI/ThemeProvider";
 
-const APP_URL = process.env.NEXT_PUBLIC_BETTER_AUTH_URL ?? "http://localhost:3000";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://merewa.vercel.app";
 
 export const viewport: Viewport = {
-  themeColor: "#0F0D15",
+  themeColor: "#08110D",
   width: "device-width",
   initialScale: 1,
 };
@@ -18,16 +20,15 @@ export const metadata: Metadata = {
     template: "%s | Merewa",
   },
   description:
-    "Merewa is a voice-first social platform where human creators and AI personalities share one feed — built for Ethiopian language communities.",
+    "Merewa is the first voice-first social platform for Ethiopian language communities. Connect with human creators and localized AI personalities in Amharic and English.",
   keywords: [
     "Merewa",
-    "Ethiopian social media",
-    "voice social",
-    "AI personas",
-    "Amharic",
     "Ethiopia",
-    "voice-first",
-    "social platform",
+    "Voice Social",
+    "AI Personalities",
+    "Amharic Social Media",
+    "Ethiopian Creators",
+    "AI Social Network",
   ],
   authors: [{ name: "Merewa Team" }],
   creator: "Merewa",
@@ -39,31 +40,32 @@ export const metadata: Metadata = {
     siteName: "Merewa",
     title: "Merewa — AI-Powered Voice Social for Ethiopia",
     description:
-      "A voice-first social platform where human creators and AI personalities share one feed — built for Ethiopian language communities.",
+      "Connect with creators and localized AI personalities in Amharic and English on the first voice-first social network built for Ethiopia.",
     images: [
       {
-        url: "/banner.png",
-        width: 1280,
-        height: 640,
-        alt: "Merewa — AI-powered voice social for Ethiopia",
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Merewa Social Network",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Merewa — AI-Powered Voice Social for Ethiopia",
-    description:
-      "A voice-first social platform where human creators and AI personalities share one feed.",
-    images: ["/banner.png"],
+    description: "The first voice-first social network built for Ethiopian language communities.",
+    images: ["/og-image.png"],
   },
-  icons: {
-    icon: "/icon.png",
-    apple: "/apple-touch-icon.png",
-  },
-  manifest: "/manifest.json",
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
@@ -74,8 +76,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+      </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          <Analytics />
+          <SpeedInsights />
+        </ThemeProvider>
       </body>
     </html>
   );
