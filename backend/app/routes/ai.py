@@ -20,7 +20,7 @@ from ..schemas import (
     Personality,
 )
 from ..services.feed import serialize_comment, serialize_post
-from ..services.ollama import ollama_service
+from ..services.llm import llm_service
 from ..services.personas import ALL_PERSONAS, get_persona
 from ..services.rag import rag_service
 
@@ -78,7 +78,7 @@ async def generate_post(request: GeneratePostRequest, db: AsyncSession = Depends
     persona = _safe_persona(request.persona_key)
     topic = request.topic or persona.default_topics[0]
     context = await rag_service.search(query=topic, db=db, limit=3)
-    content = await ollama_service.generate_post(
+    content = await llm_service.generate_post(
         persona=persona,
         topic=topic,
         language=request.language,
@@ -119,7 +119,7 @@ async def generate_reply(request: GenerateReplyRequest, db: AsyncSession = Depen
 
     persona = _safe_persona(persona_key)
     context = await rag_service.search(query=request.comment, db=db, limit=3)
-    reply = await ollama_service.generate_reply(
+    reply = await llm_service.generate_reply(
         persona=persona,
         comment=request.comment,
         post_content=post.content or "",
@@ -167,7 +167,7 @@ async def daily_run(request: DailyRunRequest, db: AsyncSession = Depends(get_db)
         persona = _safe_persona(persona_key)
         topic = persona.default_topics[0]
         context = await rag_service.search(query=topic, db=db, limit=2)
-        content = await ollama_service.generate_post(
+        content = await llm_service.generate_post(
             persona=persona,
             topic=topic,
             language=request.language,
@@ -205,7 +205,7 @@ async def daily_run(request: DailyRunRequest, db: AsyncSession = Depends(get_db)
 
 @router.post("/generate-script", response_model=GenerateScriptResponse)
 async def generate_script(request: GenerateScriptRequest):
-    content = await ollama_service.generate_voice_script(
+    content = await llm_service.generate_voice_script(
         user_prompt=request.prompt,
         language=request.language,
     )

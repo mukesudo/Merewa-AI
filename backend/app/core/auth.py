@@ -41,7 +41,7 @@ async def _ensure_unique_username(
 
 def require_internal_request(request: Request) -> None:
     token = request.headers.get("x-internal-token")
-    if token != settings.internal_api_token:
+    if token != settings.resolved_internal_api_token:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid internal token",

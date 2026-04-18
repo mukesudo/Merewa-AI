@@ -87,7 +87,7 @@ export function searchUsers(query: string): Promise<SearchUser[]> {
 }
 
 export function searchPosts(query: string): Promise<Post[]> {
-  return request<Post[]>(`/posts/search?q=${encodeURIComponent(query)}`);
+  return request<Post[]>(`/search?q=${encodeURIComponent(query)}`);
 }
 
 export function toggleFollow(username: string): Promise<FollowMutationResponse> {
@@ -126,7 +126,13 @@ export function generateScript(prompt: string, language: string): Promise<Genera
 
 export async function uploadMedia(blob: Blob): Promise<{ url: string }> {
   const formData = new FormData();
-  formData.append("file", blob, "recording.webm");
+  const filename =
+    blob instanceof File
+      ? blob.name
+      : blob.type.startsWith("image/")
+        ? "upload.png"
+        : "recording.webm";
+  formData.append("file", blob, filename);
 
   const response = await fetch(`${API_BASE_URL}/upload`, {
     method: "POST",
@@ -148,5 +154,5 @@ export function deletePost(postId: number): Promise<{status: string}> {
 }
 
 export function fetchStats(): Promise<any> {
-  return request<any>("/users/stats");
+  return request<any>("/stats");
 }

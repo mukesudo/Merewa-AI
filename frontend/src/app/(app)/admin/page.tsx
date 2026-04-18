@@ -50,7 +50,7 @@ export default function AdminPage() {
           fetchStats().then(setStats);
         })
         .catch(() => {
-          setStatusMessage("AI generation failed. Check Ollama status.");
+          setStatusMessage("AI generation failed. Check Groq and backend configuration.");
         })
         .finally(() => setIsGenerating(false));
     });
@@ -104,8 +104,8 @@ export default function AdminPage() {
                 </div>
                 <div className="status-banner">
                 <p><strong>Database:</strong> Connected</p>
-                <p><strong>Vector Search:</strong> Active (Weaviate)</p>
-                <p><strong>AI Engine:</strong> Ollama Online</p>
+                <p><strong>Vector Search:</strong> {stats?.vector_search === "weaviate" ? "Weaviate" : "Local semantic fallback"}</p>
+                <p><strong>AI Engine:</strong> {stats?.llm_provider === "groq" ? "Groq" : "Ollama"}</p>
                 <p className="muted-text persona-note">Last updated: {stats?.timestamp ? new Date(stats.timestamp).toLocaleString() : 'Just now'}</p>
                 </div>
             </section>

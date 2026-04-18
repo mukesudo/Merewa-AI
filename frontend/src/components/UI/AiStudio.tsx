@@ -31,7 +31,7 @@ export default function AiStudio({
         <span className="eyebrow">Phase 2 Control Rail</span>
         <h2>AI Personalities</h2>
         <p>
-          Generate localized posts using persona prompts, RAG context, and the
+          Generate localized posts using persona prompts, multilingual context, and the
           FastAPI backend.
         </p>
       </div>

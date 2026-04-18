@@ -47,7 +47,7 @@ export default function CreatorModal({ onClose, preferredLanguage }: CreatorModa
       setScript(res.script);
       setStep("script");
     } catch {
-      alert("Failed to generate script. Check if Ollama is running.");
+      alert("Failed to generate script. Check Groq and backend configuration.");
     } finally {
       setIsGenerating(false);
     }

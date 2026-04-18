@@ -5,9 +5,21 @@ import { betterAuth } from "better-auth";
 import { getMigrations } from "better-auth/db/migration";
 import { nextCookies } from "better-auth/next-js";
 import { username } from "better-auth/plugins/username";
+import pg from "pg";
 
-const authDatabasePath = path.join(process.cwd(), "auth.db");
-const database = new DatabaseSync(authDatabasePath);
+const authDatabaseUrl =
+  process.env.BETTER_AUTH_DATABASE_URL ?? process.env.DATABASE_URL ?? null;
+
+const database = authDatabaseUrl
+  ? new pg.Pool({
+      connectionString: authDatabaseUrl,
+      ssl: authDatabaseUrl.includes("sslmode=require")
+        ? undefined
+        : authDatabaseUrl.includes("supabase.co")
+          ? { rejectUnauthorized: false }
+          : undefined,
+    })
+  : new DatabaseSync(path.join(process.cwd(), "auth.db"));
 
 const socialProviders = {
   ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
@@ -33,7 +45,10 @@ const auth = betterAuth({
   secret:
     process.env.BETTER_AUTH_SECRET ??
     "merewa-local-secret-please-change-in-production",
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://127.0.0.1:3000",
+  baseURL:
+    process.env.BETTER_AUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "http://127.0.0.1:3000",
   database,
   emailAndPassword: {
     enabled: true,
@@ -82,6 +97,13 @@ const auth = betterAuth({
 
 const { runMigrations } = await getMigrations(auth.options);
 await runMigrations();
-database.close();
 
-console.log(`Better Auth migrations completed for ${authDatabasePath}`);
+if (database instanceof pg.Pool) {
+  await database.end();
+}
+
+console.log(
+  authDatabaseUrl
+    ? "Better Auth migrations completed against PostgreSQL."
+    : "Better Auth migrations completed for local SQLite.",
+);

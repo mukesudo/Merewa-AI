@@ -2,7 +2,6 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile
 import uuid
-import shutil
 from pathlib import Path
 from sqlalchemy import delete, desc, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -22,9 +21,10 @@ from ..schemas import (
     ToggleLikeRequest,
 )
 from ..services.feed import rank_posts, serialize_comment, serialize_post
-from ..services.ollama import ollama_service
+from ..services.llm import llm_service
 from ..services.personas import get_persona
 from ..services.rag import rag_service
+from ..services.storage import storage_service
 
 
 router = APIRouter(tags=["posts"])
@@ -153,7 +153,7 @@ async def create_comment(
             db=db,
             limit=3,
         )
-        reply_text = await ollama_service.generate_reply(
+        reply_text = await llm_service.generate_reply(
             persona=persona,
             comment=comment_in.content or "",
             post_content=post.content or "",
@@ -242,29 +242,32 @@ async def upload_media(
     file: UploadFile = File(...),
     actor: User = Depends(get_current_actor),
 ):
-    # Verify file type
-    if not file.content_type or not file.content_type.startswith("audio/"):
-        # We allow webm specifically for Merewa voice posts
-        if "audio" not in file.content_type and "webm" not in file.content_type:
-             raise HTTPException(status_code=400, detail="Only audio files are allowed")
+    content_type = (file.content_type or "").lower()
+    is_audio = content_type.startswith("audio/")
+    is_image = content_type.startswith("image/")
 
-    # Ensure upload directory exists
-    upload_dir = Path(__file__).parent.parent.parent / "uploads"
-    upload_dir.mkdir(exist_ok=True)
+    if not is_audio and not is_image:
+        raise HTTPException(status_code=400, detail="Only audio and image files are allowed")
 
-    # Generate unique filename
-    file_extension = Path(file.filename).suffix if file.filename else ".webm"
-    if not file_extension:
-        file_extension = ".webm"
-        
-    safe_filename = f"{uuid.uuid4()}{file_extension}"
-    file_path = upload_dir / safe_filename
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+    if len(content) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Uploaded file exceeds the 25 MB limit")
 
-    # Save file
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-        
-    return {"url": f"/uploads/{safe_filename}"}
+    original_name = file.filename or ("upload.webm" if is_audio else "upload.png")
+    extension = Path(original_name).suffix.lower()
+    if not extension:
+        extension = ".webm" if is_audio else ".png"
+        original_name = f"{uuid.uuid4()}{extension}"
+
+    url = await storage_service.store_upload(
+        content=content,
+        filename=original_name,
+        content_type=content_type,
+        folder="audio" if is_audio else "images",
+    )
+    return {"url": url}
 
 @router.delete("/posts/{post_id}")
 async def delete_post(

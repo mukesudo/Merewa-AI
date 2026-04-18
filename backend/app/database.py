@@ -6,7 +6,12 @@ from .models import Base
 
 settings = get_settings()
 
-engine = create_async_engine(settings.resolved_database_url, echo=settings.debug, future=True)
+engine = create_async_engine(
+    settings.resolved_database_url,
+    echo=settings.debug,
+    future=True,
+    pool_pre_ping=True,
+)
 AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -16,5 +21,7 @@ async def get_db():
 
 
 async def init_models() -> None:
+    if not settings.auto_create_tables:
+        return
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)

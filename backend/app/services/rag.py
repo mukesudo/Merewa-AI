@@ -3,18 +3,25 @@ import hashlib
 import math
 import re
 import uuid
-from typing import Dict, List, Optional
-import requests
+from typing import Any, Dict, List
 
-import weaviate
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from weaviate.classes.config import Configure, DataType, Property
-from weaviate.classes.query import MetadataQuery
 
 from ..core.config import get_settings
 from ..models import Interaction, Post
+
+try:
+    import weaviate
+    from weaviate.classes.config import Configure, DataType, Property
+    from weaviate.classes.query import MetadataQuery
+
+    WEAVIATE_AVAILABLE = True
+except Exception:
+    weaviate = None
+    Configure = DataType = Property = MetadataQuery = None
+    WEAVIATE_AVAILABLE = False
 
 
 settings = get_settings()
@@ -26,31 +33,7 @@ class RAGService:
         self._client = None
         self._collection_ready = False
 
-    def _embed(self, text: str, dimensions: int = 768) -> List[float]:
-        """Try to get embeddings from Ollama, fallback to hashing if it fails."""
-        try:
-            response = requests.post(
-                f"{settings.ollama_base_url.rstrip('/')}/api/embed",
-                json={
-                    "model": "nomic-embed-text",
-                    "input": text,
-                },
-                timeout=5,
-            )
-            response.raise_for_status()
-            embeddings = response.json().get("embeddings", [])
-            if embeddings and len(embeddings) > 0:
-                # Ollama returns a list of embeddings if input was a string or list
-                # If we passed a string, it returns [[...]] usually, check structure
-                vector = embeddings[0] if isinstance(embeddings[0], list) else embeddings
-                return vector
-        except Exception as e:
-            # Fallback to local crude hashing if Ollama is down or model missing
-            return self._embed_fallback(text, dimensions=96) # Local hashing uses 96 dims
-        
-        return self._embed_fallback(text, dimensions=96)
-
-    def _embed_fallback(self, text: str, dimensions: int = 96) -> List[float]:
+    def _embed(self, text: str, dimensions: int = 96) -> List[float]:
         tokens = re.findall(r"\w+", (text or "").lower(), flags=re.UNICODE)
         if not tokens:
             return [0.0] * dimensions
@@ -66,6 +49,8 @@ class RAGService:
         return [value / norm for value in vector]
 
     def _connect(self):
+        if not settings.weaviate_enabled or not WEAVIATE_AVAILABLE:
+            return None
         if self._client is None:
             self._client = weaviate.connect_to_local(
                 host=settings.weaviate_host,
@@ -76,10 +61,9 @@ class RAGService:
         return self._client
 
     def _ensure_collection_sync(self) -> bool:
-        if not settings.weaviate_enabled:
-            return False
-
         client = self._connect()
+        if client is None:
+            return False
         if self._collection_ready:
             return True
 
@@ -106,7 +90,7 @@ class RAGService:
             return False
 
     async def ingest_post(self, post: Post) -> None:
-        if not settings.weaviate_enabled or post.content is None:
+        if post.content is None:
             return
 
         ready = await self.ensure_collection()
@@ -196,7 +180,7 @@ class RAGService:
         )
         posts = result.scalars().unique().all()
         query_vector = self._embed(query)
-        ranked = []
+        ranked: List[Dict[str, Any]] = []
 
         for post in posts:
             content = post.content or ""

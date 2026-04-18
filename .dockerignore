@@ -1,0 +1,15 @@
+.git
+.gitignore
+.next
+frontend/.next
+frontend/node_modules
+node_modules
+backend/venv
+.pnpm-store
+backend/uploads
+frontend/auth.db
+backend/.env
+frontend/.env
+*.pyc
+*.pyo
+*.DS_Store

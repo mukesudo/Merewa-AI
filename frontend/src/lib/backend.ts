@@ -7,11 +7,16 @@ const BACKEND_URL = (process.env.MEREWA_BACKEND_URL ?? "http://127.0.0.1:8000").
   "",
 );
 const INTERNAL_API_TOKEN =
-  process.env.MEREWA_INTERNAL_API_TOKEN ?? "merewa-internal-dev-token";
+  process.env.MEREWA_INTERNAL_API_TOKEN ??
+  (process.env.NODE_ENV === "production" ? "" : "merewa-internal-dev-token");
 
 type SessionUserLike = Session["user"];
 
 function buildAuthHeaders(user?: SessionUserLike | null) {
+  if (!INTERNAL_API_TOKEN) {
+    throw new Error("MEREWA_INTERNAL_API_TOKEN must be set in production.");
+  }
+
   const headers = new Headers({
     "x-internal-token": INTERNAL_API_TOKEN,
   });

@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from ..database import AsyncSessionLocal
 from ..models import Interaction, Post, User
-from ..services.ollama import ollama_service
+from ..services.llm import llm_service
 from ..services.personas import ALL_PERSONAS, get_persona
 from ..services.rag import rag_service
 from .celery_app import celery_app
@@ -30,7 +30,7 @@ def generate_daily_ai_posts(language: str = "am", persona_keys: Optional[List[st
             for key in keys:
                 persona = get_persona(key)
                 context = await rag_service.search(persona.default_topics[0], session, limit=2)
-                content = await ollama_service.generate_post(
+                content = await llm_service.generate_post(
                     persona=persona,
                     topic=persona.default_topics[0],
                     language=language,
@@ -76,7 +76,7 @@ def reply_to_comment(post_id: int, comment_text: str, persona_key: str, language
                 raise ValueError(f"Post not found: {post_id}")
 
             context = await rag_service.search(comment_text, session, limit=3)
-            reply_text = await ollama_service.generate_reply(
+            reply_text = await llm_service.generate_reply(
                 persona=persona,
                 comment=comment_text,
                 post_content=post.content or "",

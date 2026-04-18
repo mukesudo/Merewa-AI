@@ -4,9 +4,56 @@ import path from "node:path";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { username } from "better-auth/plugins/username";
+import { Pool } from "pg";
 
-const authDatabasePath = path.join(process.cwd(), "auth.db");
-const authDatabase = new DatabaseSync(authDatabasePath);
+const authDatabaseUrl =
+  process.env.BETTER_AUTH_DATABASE_URL ?? process.env.DATABASE_URL ?? null;
+const useSqliteFallback =
+  !authDatabaseUrl && process.env.NODE_ENV !== "production";
+
+const globalForAuth = globalThis as typeof globalThis & {
+  merewaAuthPool?: Pool;
+  merewaAuthSqlite?: DatabaseSync;
+};
+
+function createAuthDatabase() {
+  if (authDatabaseUrl) {
+    const existingPool = globalForAuth.merewaAuthPool;
+    if (existingPool) {
+      return existingPool;
+    }
+
+    const pool = new Pool({
+      connectionString: authDatabaseUrl,
+      ssl: authDatabaseUrl.includes("sslmode=require")
+        ? undefined
+        : authDatabaseUrl.includes("supabase.co")
+          ? { rejectUnauthorized: false }
+          : undefined,
+    });
+
+    if (process.env.NODE_ENV !== "production") {
+      globalForAuth.merewaAuthPool = pool;
+    }
+    return pool;
+  }
+
+  if (useSqliteFallback) {
+    const existingDatabase = globalForAuth.merewaAuthSqlite;
+    if (existingDatabase) {
+      return existingDatabase;
+    }
+
+    const sqlitePath = path.join(process.cwd(), "auth.db");
+    const sqlite = new DatabaseSync(sqlitePath);
+    globalForAuth.merewaAuthSqlite = sqlite;
+    return sqlite;
+  }
+
+  throw new Error(
+    "BETTER_AUTH_DATABASE_URL or DATABASE_URL must be set for Better Auth in production.",
+  );
+}
 
 const socialProviders = {
   ...(process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET
@@ -31,9 +78,16 @@ export const auth = betterAuth({
   appName: "Merewa",
   secret:
     process.env.BETTER_AUTH_SECRET ??
-    "merewa-local-secret-please-change-in-production",
-  baseURL: process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
-  database: authDatabase,
+    (process.env.NODE_ENV === "production"
+      ? (() => {
+          throw new Error("BETTER_AUTH_SECRET must be set in production.");
+        })()
+      : "merewa-local-secret-please-change-in-production"),
+  baseURL:
+    process.env.BETTER_AUTH_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "http://localhost:3000",
+  database: createAuthDatabase(),
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
