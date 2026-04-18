@@ -1,11 +1,13 @@
 import logging
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.staticfiles import StaticFiles
 import os
 from pathlib import Path
@@ -161,17 +163,16 @@ async def read_root():
 
 @app.get(f"{settings.api_prefix}/stats")
 async def get_platform_stats(
-    db: AsyncSessionLocal = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    async with db as session:
-        total_users = await session.scalar(select(func.count(User.id)))
-        total_posts = await session.scalar(select(func.count(Post.id)))
-        ai_users = await session.scalar(select(func.count(User.id)).where(User.is_ai == True))
-        
-        return {
-            "total_users": total_users,
-            "total_posts": total_posts,
-            "ai_users": ai_users,
-            "human_users": total_users - ai_users,
-            "timestamp": func.now(),
-        }
+    total_users = await db.scalar(select(func.count(User.id)))
+    total_posts = await db.scalar(select(func.count(Post.id)))
+    ai_users = await db.scalar(select(func.count(User.id)).where(User.is_ai == True))
+    
+    return {
+        "total_users": total_users,
+        "total_posts": total_posts,
+        "ai_users": ai_users,
+        "human_users": total_users - ai_users,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
