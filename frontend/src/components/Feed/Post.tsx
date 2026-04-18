@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, MessageCircleMore, UserRound, Trash2 } from "lucide-react";
+import { ArrowUpRight, Heart, MessageCircleMore, Share2, Trash2, X } from "lucide-react";
+import { useI18n } from "../../lib/i18n";
 
-import { createComment, toggleFollow, toggleLike, deletePost } from "../../lib/api";
+import { createComment, deletePost, toggleLike, uploadMedia } from "../../lib/api";
 import useStore from "../../store/useStore";
 import type { Comment, Post as PostModel } from "../../types/api";
 
@@ -16,16 +17,18 @@ interface PostProps {
 }
 
 export default function Post({ post }: PostProps) {
+  const { t } = useI18n();
   const currentUser = useStore((state) => state.currentUser);
 
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.like_count);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>(post.comments || []);
-  const [following, setFollowing] = useState(post.viewer_follows_author);
   const [isInView, setIsInView] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [isRecordingComment, setIsRecordingComment] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentStatus, setCommentStatus] = useState<string | null>(null);
   const [isPlaybackActive, setIsPlaybackActive] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
   const postRef = useRef<HTMLDivElement | null>(null);
@@ -60,18 +63,6 @@ export default function Post({ post }: PostProps) {
     }
   };
 
-  const handleFollow = async () => {
-    if (!currentUser || post.author_id === currentUser.user.id) return;
-    const previous = following;
-    setFollowing(!previous);
-    try {
-      const result = await toggleFollow(post.author);
-      setFollowing(result.following);
-    } catch {
-      setFollowing(previous);
-    }
-  };
-
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this post?")) return;
     try {
@@ -82,29 +73,28 @@ export default function Post({ post }: PostProps) {
     }
   };
 
-  const handleCommentSubmit = async (customUrl: string) => {
+  const handleCommentSubmit = async (audioBlob: Blob) => {
     const payload = {
       content: "Voice comment",
-      media_url: customUrl,
+      media_url: "",
       type: "voice",
       language: "am",
       auto_reply: true,
     };
 
+    setIsSubmittingComment(true);
+    setCommentStatus("Uploading your voice comment...");
+
     try {
+      const { url } = await uploadMedia(audioBlob);
+      payload.media_url = url;
       const response = await createComment(post.id, payload);
       setComments((v) => [...v, response.comment]);
+      setCommentStatus("Voice comment posted.");
     } catch {
-      const fallback: Comment = {
-        id: Date.now(),
-        type: payload.type as any,
-        content: payload.content,
-        media_url: customUrl,
-        author: currentUser?.user.username ?? "you",
-        author_id: currentUser?.user.id ?? 0,
-        language: "am",
-      };
-      setComments((v) => [...v, fallback]);
+      setCommentStatus("Could not post the voice comment. Please try again.");
+    } finally {
+      setIsSubmittingComment(false);
     }
   };
 
@@ -116,10 +106,9 @@ export default function Post({ post }: PostProps) {
       recorder.ondataavailable = (e) => chunks.push(e.data);
       recorder.onstop = async () => {
         const blob = new Blob(chunks, { type: "audio/webm" });
-        const url = URL.createObjectURL(blob);
         stream.getTracks().forEach((t) => t.stop());
         setIsRecordingComment(false);
-        await handleCommentSubmit(url);
+        await handleCommentSubmit(blob);
       };
       recorder.start();
       setMediaRecorder(recorder);
@@ -130,41 +119,60 @@ export default function Post({ post }: PostProps) {
   };
 
   const stopVoiceComment = () => { if (mediaRecorder) mediaRecorder.stop(); };
+  
+  const handleShare = async () => {
+    const url = `${window.location.origin}/profile/${post.author}`;
+    const text = `Check out this voice post by @${post.author} on Merewa!`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Merewa Post",
+          text,
+          url,
+        });
+      } catch {
+        // Fallback to clipboard
+      }
+    } else {
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      alert("Link copied to clipboard!");
+    }
+  };
 
   if (isDeleted) return null;
 
   return (
-    <article ref={postRef as any} className="post-card">
-      <div className={`post-layout ${isPlaybackActive ? "is-playing" : ""}`}>
+    <article ref={postRef} className="post-card">
+      <div className={`post-layout ${isPlaybackActive && isInView ? "is-playing" : ""}`}>
         <div className="visualizer-aura">
-          {[...Array(3)].map((_, i) => (
+          {isPlaybackActive && isInView && [...Array(3)].map((_, i) => (
             <div key={i} className="aura-ripple" style={{ animationDelay: `${i * 0.6}s` }} />
           ))}
           <Link href={`/profile/${post.author}`} className="profile-link">
             <Avatar 
-                src={post.author_avatar_url} 
-                alt={post.author} 
-                className="avatar-badge" 
-                style={{ width: '160px', height: '160px', fontSize: '3rem' }}
+                src={post.author_avatar_url}
+                alt={post.author}
+                className="avatar-badge post-author-avatar"
             />
           </Link>
         </div>
 
-        <div className="tiktok-meta" style={{ textAlign: 'center', position: 'relative' }}>
+        <div className="tiktok-meta">
           {currentUser && currentUser.user.id === post.author_id && (
             <button 
               onClick={handleDelete}
-              className="btn btn-ghost" 
-              style={{ position: 'absolute', right: '0', top: '0', padding: '0.5rem', color: 'var(--accent-red)' }}
-              title="Delete Post"
+              className="btn btn-ghost post-delete-button"
+              type="button"
+              title={t("delete_post")}
             >
               <Trash2 size={18} />
             </button>
           )}
           <Link href={`/profile/${post.author}`}>
-            <strong style={{ fontSize: '1.05rem', letterSpacing: '-0.01em' }}>@{post.author}</strong>
+            <strong className="post-author-name">@{post.author}</strong>
           </Link>
-          <p className="post-body-text" style={{ marginTop: '0.4rem', opacity: 0.8, fontSize: '0.9rem' }}>{post.content}</p>
+          {post.type !== "audio" && <p className="post-body-text">{post.content}</p>}
         </div>
 
         {post.type === "audio" && post.media_url ? (
@@ -176,40 +184,68 @@ export default function Post({ post }: PostProps) {
         ) : null}
 
         <div className="tiktok-actions-rail">
-          <button className={`tiktok-action ${liked ? "active" : ""}`} onClick={handleLike}>
-            <div className="action-icon-bg glass-panel" style={{ padding: '0.8rem', borderRadius: '50%' }}>
-              <ArrowUpRight size={24} />
+          <button className={`tiktok-action ${liked ? "active" : ""}`} onClick={handleLike} type="button">
+            <div className="action-icon-bg glass-panel">
+              <Heart size={24} fill={liked ? "currentColor" : "none"} />
             </div>
             <span>{likesCount}</span>
           </button>
-          
-          <button className={`tiktok-action ${showComments ? "active" : ""}`} onClick={() => setShowComments(!showComments)}>
-            <div className="action-icon-bg glass-panel" style={{ padding: '0.8rem', borderRadius: '50%' }}>
+
+          <button
+            className={`tiktok-action ${showComments ? "active" : ""}`}
+            onClick={() => setShowComments(!showComments)}
+            type="button"
+          >
+            <div className="action-icon-bg glass-panel">
               <MessageCircleMore size={24} />
             </div>
             <span>{comments.length}</span>
+          </button>
+
+          <button className="tiktok-action" onClick={handleShare} type="button">
+            <div className="action-icon-bg glass-panel">
+              <Share2 size={24} />
+            </div>
+            <span>{t("share")}</span>
           </button>
         </div>
       </div>
 
       {showComments && (
-        <section className="comments-panel glass-panel" style={{ marginTop: '2rem', width: '100%', maxWidth: '440px', padding: '1.5rem', borderRadius: '1.5rem' }}>
-          <div className="comments-list" style={{ maxHeight: '200px', overflowY: 'auto', marginBottom: '1rem' }}>
+        <section className="comments-panel glass-panel">
+          <div className="comments-panel-header">
+            <h3>{t("conversations")}</h3>
+            <button 
+                className="btn btn-ghost btn-circle" 
+                onClick={() => setShowComments(false)}
+                type="button"
+            >
+                <X size={20} />
+            </button>
+          </div>
+          <div className="comments-list">
             {comments.length ? comments.map((c) => (
-              <div key={c.id} style={{ marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--line)' }}>
-                <strong>@{c.author}</strong>
+              <div key={c.id} className="comment-list-item">
+                <strong className="comment-author">@{c.author}</strong>
                 {c.media_url ? <AudioPlayer url={c.media_url} /> : <p>{c.content}</p>}
               </div>
-            )) : <p className="muted-text">No comments yet.</p>}
+            )) : <p className="muted-text">{t("no_comments")}</p>}
           </div>
 
-          <div className="comment-input-zone" style={{ display: 'flex', justifyContent: 'center', marginTop: '1rem' }}>
+          {commentStatus ? <p className="muted-text comment-status">{commentStatus}</p> : null}
+
+          <div className="comment-input-zone">
             <button 
-              className={`btn ${isRecordingComment ? "btn-primary" : ""}`} 
+              className={`btn ${isRecordingComment ? "btn-primary" : ""}`}
               onClick={isRecordingComment ? stopVoiceComment : startVoiceComment}
-              style={{ width: '100%', padding: '1rem', borderRadius: '1rem', fontSize: '1.1rem' }}
+              type="button"
+              disabled={isSubmittingComment}
             >
-              {isRecordingComment ? "Stop & Post" : "Record voice comment"}
+              {isSubmittingComment
+                ? t("generating")
+                : isRecordingComment
+                  ? t("stop")
+                  : t("record_voice_comment")}
             </button>
           </div>
         </section>

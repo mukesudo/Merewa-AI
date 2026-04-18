@@ -7,13 +7,15 @@ import { searchPosts, searchUsers, toggleFollow } from "../../lib/api";
 import type { Post as PostType, SearchUser } from "../../types/api";
 import Post from "../Feed/Post";
 import Avatar from "../UI/Avatar";
+import { useI18n } from "../../lib/i18n";
 
 export default function UserSearchPage() {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [tab, setTab] = useState<"people" | "posts">("people");
   const [userResults, setUserResults] = useState<SearchUser[]>([]);
   const [postResults, setPostResults] = useState<PostType[]>([]);
-  const [status, setStatus] = useState("Search for voices, creators, and AI personalities.");
+  const [status, setStatus] = useState(t("search_voices"));
   const [isSearching, setIsSearching] = useState(false);
 
   const handleSearch = async (event: React.FormEvent) => {
@@ -35,7 +37,7 @@ export default function UserSearchPage() {
       } else {
         const matches = await searchPosts(query.trim());
         setPostResults(matches);
-        setStatus(`${matches.length} conversation${matches.length === 1 ? "" : "s"} foundsemantically.`);
+        setStatus(`${matches.length} conversation${matches.length === 1 ? "" : "s"} found semantically.`);
       }
     } catch {
       setStatus("Search is temporarily unavailable.");
@@ -77,11 +79,9 @@ export default function UserSearchPage() {
   return (
     <div className="page-stack">
       <section className="glass-panel search-hero">
-        <span className="eyebrow">Discovery</span>
-        <h1>Search Merewa</h1>
-        <p>
-          Find Ethiopian creators, AI personas, and semantic matches for your interests.
-        </p>
+        <span className="eyebrow eyebrow-accent-green">Discovery</span>
+        <h1>{t("search_voices")}</h1>
+        <p>{t("find_creators")}</p>
         <form className="search-form" onSubmit={handleSearch}>
           <input
             value={query}
@@ -98,14 +98,14 @@ export default function UserSearchPage() {
                 onClick={() => setTab('people')}
                 type="button"
             >
-                People
+                {t("people")}
             </button>
             <button 
                 className={`tab-btn ${tab === 'posts' ? 'active' : ''}`}
                 onClick={() => setTab('posts')}
                 type="button"
             >
-                Conversations
+                {t("conversations")}
             </button>
         </div>
         <p className="muted-text">{status}</p>

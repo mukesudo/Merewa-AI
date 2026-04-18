@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { MonitorSmartphone, MoonStar, SunMedium } from "lucide-react";
 
 import { authClient } from "../../lib/auth-client";
-import { updateCurrentProfile } from "../../lib/api";
+import { updateCurrentProfile, uploadMedia } from "../../lib/api";
 import useStore from "../../store/useStore";
 import type { UserProfileResponse } from "../../types/api";
 import Avatar from "../UI/Avatar";
+import { Camera, Loader2 } from "lucide-react";
 
 interface SettingsPageProps {
   initialProfile: UserProfileResponse;
@@ -34,6 +36,25 @@ export default function SettingsPage({ initialProfile }: SettingsPageProps) {
   });
   const [profileStatus, setProfileStatus] = useState<string | null>(null);
   const [passwordStatus, setPasswordStatus] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleAvatarFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    setProfileStatus("Uploading new avatar...");
+
+    try {
+      const { url } = await uploadMedia(file);
+      setProfileForm((prev) => ({ ...prev, avatar_url: url }));
+      setProfileStatus("Avatar uploaded. Don't forget to save your profile!");
+    } catch (err) {
+      setProfileStatus("Avatar upload failed. Please try again.");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const handleProfileSave = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -81,11 +102,13 @@ export default function SettingsPage({ initialProfile }: SettingsPageProps) {
   };
 
   return (
-    <div className="settings-grid" style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '800px', margin: '0 auto', padding: '2rem 1rem' }}>
-      <form className="settings-card glass-panel" onSubmit={handleProfileSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '2rem', borderRadius: '1.5rem' }}>
-        <span className="eyebrow" style={{ color: 'var(--accent-green)' }}>Profile settings</span>
-        <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>Update your public identity</h1>
-        <div className="field-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+    <div className="settings-page">
+      <form className="settings-card settings-card-form glass-panel" onSubmit={handleProfileSave}>
+        <div className="settings-heading">
+          <span className="eyebrow eyebrow-accent-green">Profile settings</span>
+          <h1>Update your public identity</h1>
+        </div>
+        <div className="field-grid">
           <label className="field">
             <span>Username</span>
             <input
@@ -111,8 +134,20 @@ export default function SettingsPage({ initialProfile }: SettingsPageProps) {
             />
           </label>
           <div className="field">
-            <span>Avatar preview</span>
-            <Avatar src={profileForm.avatar_url} alt={profileForm.username} className="sidebar-avatar" />
+            <span>Avatar</span>
+            <div className="avatar-upload-trigger">
+                <Avatar src={profileForm.avatar_url} alt={profileForm.username} className="sidebar-avatar" />
+                <label className="avatar-upload-overlay center-all">
+                    {isUploadingAvatar ? <Loader2 className="spinner" size={20} /> : <Camera size={20} />}
+                    <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleAvatarFileChange} 
+                        hidden 
+                        disabled={isUploadingAvatar}
+                    />
+                </label>
+            </div>
           </div>
           <label className="field">
             <span>Avatar URL</span>
@@ -180,62 +215,78 @@ export default function SettingsPage({ initialProfile }: SettingsPageProps) {
           </label>
         </div>
         {profileStatus ? <p className="status-banner">{profileStatus}</p> : null}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-          <button className="btn btn-primary" type="submit" style={{ padding: '0.8rem 2rem', borderRadius: '2rem', fontSize: '1.1rem' }}>
+        <div className="settings-actions">
+          <button className="btn btn-primary btn-pill" type="submit">
             Save profile
           </button>
         </div>
       </form>
 
-      <section className="settings-card glass-panel" style={{ padding: '2rem', borderRadius: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <section className="settings-card glass-panel">
         <span className="eyebrow">Appearance</span>
         <h2>Theme Mode</h2>
         <p className="muted-text">Choose how Merewa looks on your device.</p>
-        
-        <div className="auth-switcher" style={{ marginTop: '1.2rem' }}>
-          <button 
-            className={`auth-switch ${theme === 'light' ? 'active' : ''}`}
-            onClick={() => setTheme('light')}
+
+        <div className="theme-switcher" role="tablist" aria-label="Theme mode">
+          <button
+            className={`theme-option ${theme === "light" ? "active" : ""}`}
+            onClick={() => setTheme("light")}
             type="button"
           >
-            Light
+            <SunMedium size={18} />
+            <span className="theme-option-copy">
+              <strong>Light</strong>
+              <small>Warm surfaces and crisp contrast.</small>
+            </span>
           </button>
-          <button 
-            className={`auth-switch ${theme === 'dark' ? 'active' : ''}`}
-            onClick={() => setTheme('dark')}
+          <button
+            className={`theme-option ${theme === "dark" ? "active" : ""}`}
+            onClick={() => setTheme("dark")}
             type="button"
           >
-            Dark
+            <MoonStar size={18} />
+            <span className="theme-option-copy">
+              <strong>Dark</strong>
+              <small>Low-glare panels for immersive browsing.</small>
+            </span>
           </button>
-          <button 
-            className={`auth-switch ${theme === 'system' ? 'active' : ''}`}
-            onClick={() => setTheme('system')}
+          <button
+            className={`theme-option ${theme === "system" ? "active" : ""}`}
+            onClick={() => setTheme("system")}
             type="button"
-            style={{ gridColumn: 'span 2' }}
           >
-            Use System Setting
+            <MonitorSmartphone size={18} />
+            <span className="theme-option-copy">
+              <strong>System</strong>
+              <small>Follow your device preference automatically.</small>
+            </span>
           </button>
         </div>
       </section>
 
-      <section className="settings-card glass-panel" style={{ padding: '2rem', borderRadius: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <span className="eyebrow">Privacy</span>
-        <h2>Profile Visibility</h2>
-        <p className="muted-text">Control what information others see on your profile.</p>
-        
-        <label className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
-          <input 
-            type="checkbox" 
-            checked={showFollowLists} 
+      <section className="settings-card glass-panel">
+        <span className="eyebrow">Profile shortcuts</span>
+        <h2>Follow List Links</h2>
+        <p className="muted-text">
+          Choose whether follower and following list links appear while you browse profiles on this device.
+        </p>
+
+        <label className="settings-toggle-row">
+          <input
+            className="settings-checkbox"
+            type="checkbox"
+            checked={showFollowLists}
             onChange={(e) => setShowFollowLists(e.target.checked)}
-            style={{ width: 'auto' }}
           />
-          <span>Show followers and following lists on my profile</span>
+          <span className="settings-toggle-copy">
+            <strong>Show follower and following shortcuts</strong>
+            <small>When disabled, profile stats stay visible but list routes are hidden locally.</small>
+          </span>
         </label>
       </section>
 
-      <form className="settings-card glass-panel" onSubmit={handlePasswordSave} style={{ padding: '2rem', borderRadius: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <span className="eyebrow" style={{ color: 'var(--accent-red)' }}>Security</span>
+      <form className="settings-card settings-card-form glass-panel" onSubmit={handlePasswordSave}>
+        <span className="eyebrow eyebrow-accent-red">Security</span>
         <h2>Change password</h2>
         <label className="field">
           <span>Current password</span>
@@ -265,21 +316,20 @@ export default function SettingsPage({ initialProfile }: SettingsPageProps) {
           />
         </label>
         {passwordStatus ? <p className="status-banner">{passwordStatus}</p> : null}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-          <button className="btn btn-primary" type="submit" style={{ padding: '0.8rem 2rem', borderRadius: '2rem', fontSize: '1.1rem' }}>
+        <div className="settings-actions">
+          <button className="btn btn-primary btn-pill" type="submit">
             Update password
           </button>
         </div>
       </form>
 
-      <section className="settings-card glass-panel" style={{ padding: '2rem', borderRadius: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <section className="settings-card glass-panel">
         <span className="eyebrow">Session</span>
         <h2>Account Operations</h2>
         <p className="muted-text">Safely sign out of your current Merewa session.</p>
-        
-        <button 
-          className="btn btn-primary" 
-          style={{ background: 'var(--accent-red)', marginTop: '1.2rem', width: '100%' }}
+
+        <button
+          className="btn btn-danger btn-block"
           onClick={async () => {
             await authClient.signOut();
             window.location.href = "/";

@@ -144,3 +144,7 @@ export function deletePost(postId: number): Promise<{status: string}> {
     method: "DELETE",
   });
 }
+
+export function fetchStats(): Promise<any> {
+  return request<any>("/users/stats");
+}

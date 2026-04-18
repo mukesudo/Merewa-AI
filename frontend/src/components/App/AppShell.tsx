@@ -1,45 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Compass,
   Home,
-  ListTodo,
-  LogOut,
   PanelLeft,
   PanelLeftClose,
+  Plus,
   Search,
   Settings,
+  ShieldCheck,
   UserRound,
 } from "lucide-react";
 
 import useStore from "../../store/useStore";
-
-import { authClient } from "../../lib/auth-client";
 import type { UserProfileResponse } from "../../types/api";
 import Avatar from "../UI/Avatar";
 import CreatorModal from "../Feed/CreatorModal";
-import { Plus } from "lucide-react";
 
 interface AppShellProps {
   currentUser: UserProfileResponse;
   children: React.ReactNode;
 }
 
+import { useI18n } from "../../lib/i18n";
+
 const navItems = [
-  { href: "/feed", label: "Home", icon: Home },
-  { href: "/search", label: "Discovery", icon: Search },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/feed", key: "flow", icon: Home },
+  { href: "/search", key: "ai_studio", icon: Search },
+  { href: "/settings", key: "settings", icon: Settings },
+  { href: "/admin", key: "admin", icon: ShieldCheck },
 ];
 
 export default function AppShell({ currentUser, children }: AppShellProps) {
+  const { t } = useI18n();
   const pathname = usePathname();
-  const router = useRouter();
   const setCurrentUser = useStore((state) => state.setCurrentUser);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showCreator, setShowCreator] = useState(false);
+  const activeNavItem = navItems.find((item) => pathname.startsWith(item.href));
+  const currentPageLabel =
+    activeNavItem ? t(activeNavItem.key) : (pathname.startsWith("/profile") ? "Profile" : "Merewa");
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
@@ -56,22 +58,23 @@ export default function AppShell({ currentUser, children }: AppShellProps) {
     setCurrentUser(currentUser);
   }, [currentUser, setCurrentUser]);
 
-
-
   return (
     <div className="app-shell" data-collapsed={isCollapsed}>
       <aside className="app-sidebar glass-panel">
         <div className="sidebar-brand">
-          <div className="stack-inline" style={{ justifyContent: 'space-between', width: '100%' }}>
-            {!isCollapsed && (
-              <Link href="/feed" className="brand-link">
-                <h2>Merewa</h2>
-              </Link>
-            )}
-            <button className="btn" onClick={toggleSidebar} style={{ padding: '0.4rem' }}>
-              {isCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
-            </button>
-          </div>
+          {!isCollapsed && (
+            <Link href="/feed" className="brand-link center-all">
+              <h2 className="premium-gradient-text logo-large">Merewa</h2>
+            </Link>
+          )}
+          <button
+            className="btn sidebar-toggle-floating"
+            onClick={toggleSidebar}
+            type="button"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
+          </button>
         </div>
 
         <nav className="nav-list">
@@ -83,29 +86,29 @@ export default function AppShell({ currentUser, children }: AppShellProps) {
                 key={item.href}
                 href={item.href}
                 className={`nav-item ${active ? "active" : ""}`}
-                title={isCollapsed ? item.label : ""}
+                title={isCollapsed ? t(item.key) : ""}
               >
                 <Icon size={18} />
-                {!isCollapsed && <span>{item.label}</span>}
+                {!isCollapsed && <span>{t(item.key)}</span>}
               </Link>
             );
           })}
           
-          <button 
-            className="nav-item plus-creator" 
+          <button
+            className="nav-item nav-item-create"
             onClick={() => setShowCreator(true)}
-            style={{ marginTop: 'auto', background: 'var(--accent-green)', color: '#fff', border: 0 }}
+            type="button"
           >
             <Plus size={20} />
-            {!isCollapsed && <span>Create</span>}
+            {!isCollapsed && <span>{t("create")}</span>}
           </button>
         </nav>
 
         <div className="sidebar-user">
-          <Link href={`/profile/${currentUser.user.username}`} className="sidebar-user-card">
+          <Link href={`/profile/${currentUser.user.username}`} className="sidebar-user-card" title={isCollapsed ? currentUser.user.username : ""}>
             <Avatar src={currentUser.user.avatar_url} alt={currentUser.user.username} className="sidebar-avatar" />
             {!isCollapsed && (
-                <div>
+                <div className="sidebar-user-info">
                     <strong>{currentUser.user.display_name ?? currentUser.user.username}</strong>
                     <span>@{currentUser.user.username}</span>
                 </div>
@@ -116,7 +119,9 @@ export default function AppShell({ currentUser, children }: AppShellProps) {
 
       <div className="app-stage">
         <header className="app-stage-header">
-          <div /> {/* Spacer where name was */}
+          <div className="app-stage-spacer">
+            <h1>{currentPageLabel}</h1>
+          </div>
           <Link href={`/profile/${currentUser.user.username}`} className="stage-profile-link">
             <Avatar src={currentUser.user.avatar_url} alt={currentUser.user.username} className="mini-avatar" />
             <div>

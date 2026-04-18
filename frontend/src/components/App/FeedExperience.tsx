@@ -2,7 +2,7 @@
 
 import { startTransition, useEffect, useState } from "react";
 
-import { fetchFeed, fetchPersonalities, generateAiPost, getCurrentProfile } from "../../lib/api";
+import { fetchFeed, generateAiPost, getCurrentProfile } from "../../lib/api";
 import useStore from "../../store/useStore";
 import type {
   FeedResponse,
@@ -91,12 +91,26 @@ export default function FeedExperience({
   const activePosts = posts.length ? posts : fallbackPosts;
 
   return (
-    <section className="feed-stage">
-      <div className="feed-container">
-        {activePosts.map((post: Post) => (
-          <PostCard key={post.id} post={post} />
-        ))}
-      </div>
-    </section>
+    <div className="app-feed-grid">
+      <section className="feed-stage">
+        <div className="feed-container">
+          {activePosts.map((post: Post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </div>
+      </section>
+
+      <AiStudio
+        personalities={activePersonalities}
+        selectedPersona={selectedPersona}
+        topic={topic}
+        statusMessage={statusMessage}
+        isGenerating={isGenerating}
+        onSelectPersona={setSelectedPersona}
+        onTopicChange={setTopic}
+        onGenerate={handleGenerate}
+        onRefresh={() => void refreshFeed()}
+      />
+    </div>
   );
 }

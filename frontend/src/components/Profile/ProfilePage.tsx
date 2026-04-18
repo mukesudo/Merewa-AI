@@ -16,11 +16,10 @@ interface ProfilePageProps {
 
 export default function ProfilePage({ initialProfile }: ProfilePageProps) {
   const currentUser = useStore((state) => state.currentUser);
+  const showFollowLists = useStore((state) => state.showFollowLists);
   const [profile, setProfile] = useState(initialProfile);
 
   const isSelf = currentUser?.user.username === profile.user.username;
-
-  const showFollowLists = useStore((state) => state.showFollowLists);
 
   const onToggleFollow = async () => {
     const previous = profile.user.viewer_follows;
@@ -55,6 +54,33 @@ export default function ProfilePage({ initialProfile }: ProfilePageProps) {
     }
   };
 
+  const renderRelationshipStat = (
+    type: "followers" | "following",
+    count: number,
+    label: string,
+  ) => {
+    const content = (
+      <>
+        <strong>{count}</strong>
+        <span>{label}</span>
+      </>
+    );
+
+    if (!showFollowLists) {
+      return (
+        <div className="stat-link stat-link-disabled" aria-disabled="true">
+          {content}
+        </div>
+      );
+    }
+
+    return (
+      <Link href={`/profile/${profile.user.username}/${type}`} className="stat-link">
+        {content}
+      </Link>
+    );
+  };
+
   return (
     <div className="profile-grid">
       <section className="profile-hero glass-panel">
@@ -81,18 +107,12 @@ export default function ProfilePage({ initialProfile }: ProfilePageProps) {
         </div>
         <div className="profile-actions">
           <div className="profile-stats">
-            <div>
+            <div className="profile-stat">
               <strong>{profile.user.posts_count}</strong>
               <span>Posts</span>
             </div>
-            <Link href={`/profile/${profile.user.username}/followers`} className="stat-link" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <strong>{profile.user.followers_count}</strong>
-              <span>Followers</span>
-            </Link>
-            <Link href={`/profile/${profile.user.username}/following`} className="stat-link" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <strong>{profile.user.following_count}</strong>
-              <span>Following</span>
-            </Link>
+            {renderRelationshipStat("followers", profile.user.followers_count, "Followers")}
+            {renderRelationshipStat("following", profile.user.following_count, "Following")}
           </div>
           {!isSelf ? (
             <button className={`btn ${profile.user.viewer_follows ? "btn-primary" : ""}`} onClick={() => void onToggleFollow()} type="button">
@@ -103,10 +123,15 @@ export default function ProfilePage({ initialProfile }: ProfilePageProps) {
               Edit profile
             </Link>
           )}
+          {!showFollowLists ? (
+            <p className="muted-text profile-layout-note">
+              Follow list links are hidden on this device.
+            </p>
+          ) : null}
         </div>
       </section>
 
-      <section className="profile-columns" style={{ display: 'block' }}>
+      <section className="profile-columns profile-columns-single">
         <div className="profile-feed">
           <div className="section-header">
             <h2>Recent posts</h2>

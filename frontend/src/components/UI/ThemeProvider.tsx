@@ -8,6 +8,7 @@ interface ThemeProviderProps {
 }
 
 export default function ThemeProvider({ children }: ThemeProviderProps) {
+  const storageKey = "merewa-theme";
   const theme = useStore((state) => state.theme);
   const setTheme = useStore((state) => state.setTheme);
   const [mounted, setMounted] = useState(false);
@@ -15,19 +16,19 @@ export default function ThemeProvider({ children }: ThemeProviderProps) {
   // Load theme from localStorage on mount and handle hydration
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem("merewa-theme") as "light" | "dark" | "system" | null;
+    const savedTheme = localStorage.getItem(storageKey) as "light" | "dark" | "system" | null;
     if (savedTheme) {
       setTheme(savedTheme);
     }
-  }, [setTheme]);
+  }, [setTheme, storageKey]);
 
   // Apply theme to document and persist
   useEffect(() => {
     if (!mounted) return;
     const applyTheme = (resolvedTheme: "light" | "dark") => {
       document.documentElement.setAttribute("data-theme", resolvedTheme);
-      // Update meta theme-color for mobile browsers
-      const themeColor = resolvedTheme === "dark" ? "#0F0D15" : "#fcfbf7";
+      document.documentElement.style.colorScheme = resolvedTheme;
+      const themeColor = resolvedTheme === "dark" ? "#08110d" : "#f4f2ec";
       document.querySelector('meta[name="theme-color"]')?.setAttribute("content", themeColor);
     };
 
@@ -38,13 +39,13 @@ export default function ThemeProvider({ children }: ThemeProviderProps) {
       handleChange(); // Initial application
       mediaQuery.addEventListener("change", handleChange);
       
-      localStorage.setItem("merewa-theme", "system");
+      localStorage.setItem(storageKey, "system");
       return () => mediaQuery.removeEventListener("change", handleChange);
     } else {
       applyTheme(theme);
-      localStorage.setItem("merewa-theme", theme);
+      localStorage.setItem(storageKey, theme);
     }
-  }, [theme]);
+  }, [mounted, storageKey, theme]);
 
   return <>{children}</>;
 }

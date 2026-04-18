@@ -24,12 +24,12 @@ export default function UserListPage({ username, type }: UserListPageProps) {
   }, [username, type]);
 
   return (
-    <div className="user-list-page" style={{ padding: '1rem', maxWidth: '600px', margin: '0 auto' }}>
-      <header className="stack-inline" style={{ marginBottom: '2rem', gap: '1rem' }}>
+    <div className="user-list-page">
+      <header className="stack-inline user-list-header">
         <Link href={`/profile/${username}`} className="btn btn-ghost">
           <ArrowLeft size={20} />
         </Link>
-        <h1 style={{ fontSize: '1.5rem', textTransform: 'capitalize' }}>{type}</h1>
+        <h1 className="user-list-title">{type}</h1>
       </header>
 
       {loading ? (
@@ -37,13 +37,13 @@ export default function UserListPage({ username, type }: UserListPageProps) {
       ) : users.length === 0 ? (
         <p className="muted-text">No {type} found.</p>
       ) : (
-        <div className="user-stack" style={{ display: 'grid', gap: '1rem' }}>
+        <div className="user-stack">
           {users.map((user) => (
-            <Link key={user.username} href={`/profile/${user.username}`} className="user-card glass-panel" style={{ padding: '1rem', display: 'flex', alignItems: 'center', gap: '1rem', borderRadius: '1rem', textDecoration: 'none', color: 'inherit' }}>
+            <Link key={user.username} href={`/profile/${user.username}`} className="user-card glass-panel">
               <Avatar src={user.avatar_url} alt={user.username} className="mini-avatar" />
               <div>
                 <strong>{user.display_name ?? user.username}</strong>
-                <p className="muted-text" style={{ fontSize: '0.85rem' }}>@{user.username}</p>
+                <p className="muted-text user-handle">@{user.username}</p>
               </div>
             </Link>
           ))}

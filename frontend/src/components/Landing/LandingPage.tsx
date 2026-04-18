@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, BrainCircuit, Languages, Mic, Users } from "lucide-react";
+import { useI18n } from "../../lib/i18n";
 
 const featureCards = [
   {
@@ -24,48 +27,57 @@ const featureCards = [
   },
 ];
 
+
 export default function LandingPage() {
+  const { t } = useI18n();
+
   return (
     <div className="landing-shell">
-      <section className="landing-hero" style={{ minHeight: '80vh', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-        <div className="hero-copy" style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <span className="eyebrow" style={{ marginBottom: '1.5rem', display: 'block' }}>Welcome to Merewa</span>
-          <h1 style={{ fontSize: 'clamp(3rem, 6vw, 5rem)', marginBottom: '1.5rem' }}>The voice of Ethiopia.</h1>
-          <p style={{ fontSize: '1.2rem', marginBottom: '2.5rem', opacity: 0.9 }}>
-            Join a voice-first network where human creators and local AI personalities share one feed. Share your story in Amharic or English.
+      <section className="landing-hero landing-hero-centered">
+        <div className="hero-copy landing-copy floating">
+          <span className="eyebrow eyebrow-block aura-text">{t("welcome")}</span>
+          <h1 className="landing-title premium-gradient-text">{t("landing_title")}</h1>
+          <h2 className="landing-subtitle-large">{t("landing_subtitle_large")}</h2>
+          <p className="landing-subtitle">
+            {t("landing_subtitle")}
           </p>
-          <div className="hero-actions" style={{ justifyContent: 'center', gap: '1.5rem' }}>
-            <Link href="/sign-up" className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem', borderRadius: '2rem' }}>
-              Create account
+          <div className="hero-actions hero-actions-centered">
+            <Link href="/sign-up" className="btn btn-primary btn-xl btn-glow">
+              {t("start_journey")}
               <ArrowRight size={20} />
             </Link>
-            <Link href="/sign-in" className="btn" style={{ padding: '1rem 2rem', fontSize: '1.1rem', borderRadius: '2rem', background: 'rgba(255,255,255,0.05)' }}>
-              Sign in
+            <Link href="/sign-in" className="btn btn-ghost btn-xl">
+              {t("sign_in")}
             </Link>
           </div>
         </div>
       </section>
 
-      <section className="landing-section" style={{ padding: '4rem 0', maxWidth: '1000px', margin: '0 auto' }}>
-        <div className="section-header" style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <span className="eyebrow">Features</span>
-          <h2>Why Merewa?</h2>
+      <section className="landing-section landing-section-wide">
+        <div className="section-header section-header-centered">
+          <span className="eyebrow">The Experience</span>
+          <h2>A new way to listen.</h2>
         </div>
-        <div className="landing-card-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '2rem' }}>
+        <div className="landing-card-grid landing-card-grid-fluid">
           {featureCards.map((feature) => {
             const Icon = feature.icon;
             return (
-              <article key={feature.title} className="landing-card glass-panel" style={{ padding: '2rem', textAlign: 'center', borderRadius: '1.5rem' }}>
-                <div style={{ display: 'inline-flex', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', marginBottom: '1rem', color: 'var(--accent-green)' }}>
-                  <Icon size={28} />
+              <article key={feature.title} className="landing-card landing-feature-card glass-panel">
+                <div className="feature-icon-wrapper">
+                  <Icon size={32} className="feature-icon" />
+                  <div className="icon-aura" />
                 </div>
-                <h3 style={{ marginBottom: '0.8rem', fontSize: '1.2rem' }}>{feature.title}</h3>
-                <p style={{ fontSize: '0.95rem' }}>{feature.detail}</p>
+                <h3 className="landing-card-title">{feature.title}</h3>
+                <p>{feature.detail}</p>
               </article>
             );
           })}
         </div>
       </section>
+
+      <footer className="landing-footer center-all">
+        <p className="muted-text">Built with ❤️ for Ethiopian communities.</p>
+      </footer>
     </div>
   );
 }

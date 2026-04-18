@@ -30,6 +30,22 @@ export default function AudioPlayer({
       return;
     }
 
+    const interval = setInterval(() => {
+        if (audio.duration && audio.duration !== Infinity && duration === 0) {
+            setDuration(audio.duration);
+            clearInterval(interval);
+        }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [duration]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) {
+      return;
+    }
+
     if (autoPlay) {
       void audio
         .play()
@@ -99,6 +115,8 @@ export default function AudioPlayer({
         }}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
+        onDurationChange={() => setDuration(audioRef.current?.duration ?? 0)}
+        onError={(e) => console.error("Audio error:", e)}
       />
     </div>
   );
