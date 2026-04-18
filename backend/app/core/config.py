@@ -16,12 +16,11 @@ class Settings(BaseSettings):
     environment: str = "development"
     debug: bool = False
     api_prefix: str = "/api"
-    cors_origins: List[str] = Field(
-        default_factory=lambda: [
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-        ]
-    )
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    @property
+    def resolved_cors_origins(self) -> List[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",")]
 
     database_url: Optional[str] = None
     postgres_user: str = "merewa"

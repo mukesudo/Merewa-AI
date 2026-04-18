@@ -68,8 +68,8 @@ async def _seed_defaults() -> None:
 
         await session.flush()
 
-        # 3. Seed demo posts if enabled and no posts exist
-        if settings.auto_seed_demo_data:
+        # 3. Seed demo posts if enabled (usually only for development)
+        if settings.auto_seed_demo_data and settings.environment == "development":
             post_count_result = await session.execute(select(func.count(Post.id)))
             post_count = post_count_result.scalar() or 0
             if post_count == 0:
@@ -142,7 +142,7 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins or ["*"],
+    allow_origins=settings.resolved_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
