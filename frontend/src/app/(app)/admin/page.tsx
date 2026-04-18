@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState, startTransition } from "react";
 import { BarChart3, Database, Users, Wand2 } from "lucide-react";
 import { fetchStats, fetchPersonalities, generateAiPost } from "../../../lib/api";
