@@ -89,12 +89,10 @@ body {
     radial-gradient(circle at 15% 10%, var(--grad-accent-1), transparent 24%),
     radial-gradient(circle at 85% 12%, var(--grad-accent-2), transparent 22%),
     radial-gradient(circle at 55% 80%, var(--grad-accent-3), transparent 24%),
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       var(--grad-start) 0%,
       var(--grad-mid) 48%,
-      var(--grad-end) 100%
-    );
+      var(--grad-end) 100%);
   color: var(--text-main);
   font-family: "Plus Jakarta Sans", sans-serif;
   line-height: 1.55;
@@ -147,9 +145,9 @@ button {
 }
 
 .sidebar-toggle-floating:hover {
-    transform: scale(1.1);
-    background: var(--accent-primary);
-    color: #fff;
+  transform: scale(1.1);
+  background: var(--accent-primary);
+  color: #fff;
 }
 
 input,
@@ -200,7 +198,7 @@ textarea:focus {
 }
 
 .glass-panel:hover {
-  box-shadow: 
+  box-shadow:
     0 20px 40px -12px rgba(0, 0, 0, 0.5),
     inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
@@ -214,7 +212,9 @@ textarea:focus {
 }
 
 @keyframes shine {
-  to { background-position: 200% center; }
+  to {
+    background-position: 200% center;
+  }
 }
 
 .floating {
@@ -222,8 +222,15 @@ textarea:focus {
 }
 
 @keyframes floating {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 .aura-ripple {
@@ -240,8 +247,17 @@ textarea:focus {
 }
 
 @keyframes ripple {
-  0% { width: 40%; height: 40%; opacity: 0.5; }
-  100% { width: 150%; height: 150%; opacity: 0; }
+  0% {
+    width: 40%;
+    height: 40%;
+    opacity: 0.5;
+  }
+
+  100% {
+    width: 150%;
+    height: 150%;
+    opacity: 0;
+  }
 }
 
 .eyebrow {
@@ -459,42 +475,14 @@ textarea:disabled {
 .landing-shell {
   max-width: var(--content-max);
   margin: 0 auto;
-  min-height: 100vh;
-  background: 
-    radial-gradient(circle at 0% 0%, rgba(74, 193, 127, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 100% 100%, rgba(74, 193, 127, 0.08) 0%, transparent 40%);
-}
-
-.landing-nav {
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: 1.5rem 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-.landing-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--text-main);
-  font-family: var(--font-display);
-}
-
-.logo-img {
-  border-radius: 20%;
 }
 
 .landing-hero {
-  min-height: 80vh;
-  display: flex;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 26rem);
+  gap: 1.25rem;
   align-items: center;
-  justify-content: center;
-  padding-bottom: 4rem;
 }
 
 .hero-copy h1,
@@ -538,7 +526,8 @@ textarea:disabled {
 .post-body h3 {
   font-family: "Space Grotesk", sans-serif;
   margin: 0;
-  font-size: 1.15rem; /* Reduced from clamp usage for minimalism */
+  font-size: 1.15rem;
+  /* Reduced from clamp usage for minimalism */
   font-weight: 600;
   line-height: 1.35;
 }
@@ -564,7 +553,7 @@ textarea:disabled {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -694,7 +683,8 @@ textarea:disabled {
 
 .auth-card {
   width: min(100%, 34rem);
-  margin: 2rem auto; /* Centering */
+  margin: 2rem auto;
+  /* Centering */
   border-radius: var(--radius-xl);
   padding: 1.5rem;
 }
@@ -779,6 +769,7 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   font-weight: 600;
 }
+
 [data-theme="dark"] .auth-switch.active {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
@@ -880,11 +871,11 @@ body {
 }
 
 .logo-large {
-    font-size: 2.2rem !important;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    filter: drop-shadow(0 0 15px rgba(138, 112, 255, 0.4));
-    margin-bottom: 0.5rem;
+  font-size: 2.2rem !important;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  filter: drop-shadow(0 0 15px rgba(138, 112, 255, 0.4));
+  margin-bottom: 0.5rem;
 }
 
 .sidebar-avatar {
@@ -1006,7 +997,7 @@ body {
 }
 
 .app-stage-header {
-    padding-top: 4rem !important;
+  padding-top: 4rem !important;
 }
 
 .post-layout {
@@ -1122,13 +1113,18 @@ body {
 }
 
 .comments-panel-header h3 {
-    font-size: 1.25rem;
-    margin: 0;
+  font-size: 1.25rem;
+  margin: 0;
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
 }
 
 .aura-ripple {
@@ -1178,13 +1174,21 @@ body {
 }
 
 .tiktok-action.active heart-icon {
-    animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 @keyframes heartPop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.4); }
-    100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.4);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* --- End Post Component Fixes --- */
@@ -1209,32 +1213,32 @@ body {
 }
 
 .avatar-upload-trigger {
-    position: relative;
-    width: 3.2rem;
-    height: 3.2rem;
-    cursor: pointer;
+  position: relative;
+  width: 3.2rem;
+  height: 3.2rem;
+  cursor: pointer;
 }
 
 .avatar-upload-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.4);
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    cursor: pointer;
-    color: #fff;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+  color: #fff;
 }
 
 .avatar-upload-trigger:hover .avatar-upload-overlay {
-    opacity: 1;
+  opacity: 1;
 }
 
 .avatar-upload-trigger input {
-    display: none;
+  display: none;
 }
 
 .comment-form {
@@ -1500,6 +1504,7 @@ audio {
 }
 
 @media (max-width: 1100px) {
+
   .landing-hero,
   .app-feed-grid,
   .profile-columns,
@@ -1539,7 +1544,8 @@ audio {
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
     overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch; /* Momentum scrolling for iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Momentum scrolling for iOS */
   }
 
   .post-card {
@@ -1547,6 +1553,7 @@ audio {
     scroll-snap-stop: always;
     transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
   }
+
   .landing-shell,
   .app-content,
   .auth-shell,
@@ -1620,6 +1627,7 @@ audio {
     opacity: 0.8;
     border-width: 10px;
   }
+
   100% {
     transform: scale(2.2);
     opacity: 0;
@@ -1839,7 +1847,8 @@ audio {
   display: grid;
   gap: 1.5rem;
   margin: 0 auto;
-  padding: 2rem 1rem 10rem; /* Added large bottom padding for scrolling */
+  padding: 2rem 1rem 10rem;
+  /* Added large bottom padding for scrolling */
   overflow-y: auto;
   max-height: 100vh;
 }
@@ -2257,6 +2266,7 @@ audio {
 }
 
 @media (max-width: 900px) {
+
   .theme-switcher,
   .landing-card-grid-fluid,
   .search-results {

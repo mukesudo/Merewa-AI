@@ -226,12 +226,15 @@ async def toggle_like(
     like = existing.scalar_one_or_none()
 
     liked = like is None
-    if like is None:
+    if liked:
         db.add(Interaction(user_id=user_id, post_id=post_id, type="like"))
         post.like_count += 1
     else:
         await db.execute(delete(Interaction).where(Interaction.id == like.id))
         post.like_count = max(0, post.like_count - 1)
+
+    await db.commit()
+    return LikeMutationResponse(liked=liked, like_count=post.like_count)
 
 
 @router.post("/upload")
