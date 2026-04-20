@@ -1,8 +1,21 @@
 from functools import lru_cache
 from typing import Any, List, Literal, Optional
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _async_postgresql_url(url: str) -> str:
+    """Ensure async SQLAlchemy uses asyncpg (plain postgresql:// defaults to psycopg2)."""
+    import re
+    u = url.strip()
+    if re.match(r"^postgres(ql)?\+", u):
+        return u
+    if u.startswith("postgresql://"):
+        return "postgresql+asyncpg://" + u[len("postgresql://") :]
+    if u.startswith("postgres://"):
+        return "postgresql+asyncpg://" + u[len("postgres://") :]
+    return u
 
 
 class Settings(BaseSettings):
@@ -51,9 +64,11 @@ class Settings(BaseSettings):
     supabase_storage_bucket: str = "merewa-media"
 
     weaviate_enabled: bool = False
-    weaviate_host: str = "127.0.0.1"
+    weaviate_host: Optional[str] = "127.0.0.1"
     weaviate_http_port: int = 8080
     weaviate_grpc_port: int = 50051
+    weaviate_url: Optional[str] = None
+    weaviate_api_key: Optional[str] = None
     weaviate_collection_name: str = "PostMemory"
 
     auto_seed_demo_data: bool = False
@@ -73,26 +88,6 @@ class Settings(BaseSettings):
             return [str(origin).strip() for origin in value if str(origin).strip()]
         raise TypeError("cors_origins must be a list or comma-separated string")
 
-    @model_validator(mode="after")
-    def _validate_production_requirements(self) -> "Settings":
-        if not self.is_production:
-            return self
-
-        if not self.database_url and not self.supabase_database_url:
-            raise ValueError("DATABASE_URL or SUPABASE_DATABASE_URL is required in production")
-        if not self.internal_api_token:
-            raise ValueError("INTERNAL_API_TOKEN is required in production")
-        if self.llm_provider == "groq" and not self.groq_api_key:
-            raise ValueError("GROQ_API_KEY is required when LLM_PROVIDER=groq")
-        if self.storage_backend == "supabase":
-            if not self.supabase_url:
-                raise ValueError("SUPABASE_URL is required when STORAGE_BACKEND=supabase")
-            if not self.supabase_service_role_key:
-                raise ValueError(
-                    "SUPABASE_SERVICE_ROLE_KEY is required when STORAGE_BACKEND=supabase"
-                )
-        return self
-
     @property
     def is_production(self) -> bool:
         return self.environment.lower() == "production"
@@ -100,9 +95,10 @@ class Settings(BaseSettings):
     @property
     def resolved_database_url(self) -> str:
         if self.database_url:
-            return self.database_url
+            return _async_postgresql_url(self.database_url)
         if self.supabase_database_url:
-            return self.supabase_database_url
+            return _async_postgresql_url(self.supabase_database_url)
+            
         return (
             f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"

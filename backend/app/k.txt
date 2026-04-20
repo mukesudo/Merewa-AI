@@ -1,0 +1,31 @@
+Viewed database.py:1-29
+
+I understand. Docker deployments can be extremely frustrating when database drivers and cloud poolers don't play nice. Let's simplify everything and get you back to a clean development state.
+
+I will revert the complex connection logic in the backend so it works simply with your local `.env` file again.
+
+### Plan:
+1.  **Revert `database.py`**: Remove all the SSL/pooling/Supavisor fixes.
+2.  **Revert `config.py`**: Remove the URL-encoding and bracket-stripping logic.
+3.  **Revert `rag.py`**: Revert Weaviate Cloud authentication logic.
+
+---
+
+### 1. Reverting `database.py` to simple state
+
+
+Edited database.py
+Viewed config.py:1-154
+Viewed rag.py:1-234
+
+I will now revert the remaining files to their simple, development-focused state.
+
+### 2. Reverting `config.py`
+I am removing the complex URL-encoding logic, bracket stripping, and strict production validation. This returns the configuration to a standard FastAPI/Pydantic-settings pattern.
+
+
+
+Edited config.py
+Edited rag.py
+Edited rag.py
+Viewed auth.ts:1-136

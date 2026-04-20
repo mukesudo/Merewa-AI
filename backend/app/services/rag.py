@@ -24,6 +24,7 @@ except Exception:
     WEAVIATE_AVAILABLE = False
 
 
+
 settings = get_settings()
 
 
@@ -51,14 +52,21 @@ class RAGService:
     def _connect(self):
         if not settings.weaviate_enabled or not WEAVIATE_AVAILABLE:
             return None
-        if self._client is None:
+        if self._client is not None:
+            return self._client
+
+        try:
+            # Connect to local Weaviate
             self._client = weaviate.connect_to_local(
-                host=settings.weaviate_host,
+                host=settings.weaviate_host or "127.0.0.1",
                 port=settings.weaviate_http_port,
                 grpc_port=settings.weaviate_grpc_port,
                 skip_init_checks=True,
             )
-        return self._client
+            return self._client
+        except Exception:
+            return None
+
 
     def _ensure_collection_sync(self) -> bool:
         client = self._connect()
