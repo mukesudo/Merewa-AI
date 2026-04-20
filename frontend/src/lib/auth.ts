@@ -25,11 +25,6 @@ function createAuthDatabase() {
 
     const pool = new Pool({
       connectionString: authDatabaseUrl,
-      ssl: authDatabaseUrl.includes("sslmode=require")
-        ? undefined
-        : authDatabaseUrl.includes("supabase.co")
-          ? { rejectUnauthorized: false }
-          : undefined,
     });
 
     if (process.env.NODE_ENV !== "production") {
@@ -37,6 +32,7 @@ function createAuthDatabase() {
     }
     return pool;
   }
+
 
   if (useSqliteFallback) {
     const existingDatabase = globalForAuth.merewaAuthSqlite;
