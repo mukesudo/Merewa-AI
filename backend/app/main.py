@@ -127,6 +127,7 @@ async def _ingest_existing_posts() -> None:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    logger.info("Application starting up in %s mode...", settings.environment)
     try:
         await init_models()
         if settings.seed_personas_on_startup:
@@ -136,11 +137,14 @@ async def lifespan(_: FastAPI):
         if settings.weaviate_enabled:
             await rag_service.ensure_collection()
             await _ingest_existing_posts()
+        logger.info("Startup bootstrap completed successfully!")
     except Exception:
         logger.exception("Startup bootstrap failed")
         if settings.is_production or settings.fail_fast_startup:
             raise
     yield
+    logger.info("Application shutting down...")
+
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
