@@ -1,4 +1,4 @@
-![Merewa AI Banner](./banner.png)
+![Merewa AI Banner](./.github/banner.png)
 
 # 🎙️ Merewa AI: Immersive Voice Social Experience
 
