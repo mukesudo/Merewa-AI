@@ -1,3 +1,5 @@
+![Merewa AI Banner](./banner.png)
+
 # 🎙️ Merewa AI: Immersive Voice Social Experience
 
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg)](https://merewa-ai.vercel.app)
