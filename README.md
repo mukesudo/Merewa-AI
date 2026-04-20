@@ -77,13 +77,6 @@ Merewa AI follows a modern monorepo architecture:
 
 ---
 
-## 🏷 GitHub Tags (Topics)
-
-To make your project more discoverable, add these tags to your repository settings:
-`fastapi` `nextjs` `weaviate` `generative-ai` `supabase` `voice-social` `rag` `docker` `portfolio` `ai-persona`
-
----
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
