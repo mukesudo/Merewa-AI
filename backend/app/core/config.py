@@ -1,7 +1,8 @@
 from functools import lru_cache
 from typing import Any, List, Literal, Optional
+from urllib.parse import quote_plus
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -9,6 +10,9 @@ def _async_postgresql_url(url: str) -> str:
     """Ensure async SQLAlchemy uses asyncpg (plain postgresql:// defaults to psycopg2)."""
     import re
     u = url.strip()
+    # Remove any brackets if the user accidentally left them in from Supabase UI
+    u = u.replace("[", "").replace("]", "")
+    
     if re.match(r"^postgres(ql)?\+", u):
         return u
     if u.startswith("postgresql://"):
@@ -88,6 +92,31 @@ class Settings(BaseSettings):
             return [str(origin).strip() for origin in value if str(origin).strip()]
         raise TypeError("cors_origins must be a list or comma-separated string")
 
+    @model_validator(mode="after")
+    def _validate_production_requirements(self) -> "Settings":
+        if not self.is_production:
+            return self
+
+        if not self.database_url and not self.supabase_database_url:
+            raise ValueError("DATABASE_URL or SUPABASE_DATABASE_URL is required in production")
+        if not self.internal_api_token:
+            raise ValueError("INTERNAL_API_TOKEN is required in production")
+        if self.llm_provider == "groq" and not self.groq_api_key:
+            raise ValueError("GROQ_API_KEY is required when LLM_PROVIDER=groq")
+        if self.storage_backend == "supabase":
+            if not self.supabase_url:
+                raise ValueError("SUPABASE_URL is required when STORAGE_BACKEND=supabase")
+            if not self.supabase_service_role_key:
+                raise ValueError(
+                    "SUPABASE_SERVICE_ROLE_KEY is required when STORAGE_BACKEND=supabase"
+                )
+        
+        if self.weaviate_enabled:
+            if not self.weaviate_url and not self.weaviate_host:
+                raise ValueError("WEAVIATE_URL or WEAVIATE_HOST is required when WEAVIATE_ENABLED=True")
+                
+        return self
+
     @property
     def is_production(self) -> bool:
         return self.environment.lower() == "production"
@@ -99,8 +128,10 @@ class Settings(BaseSettings):
         if self.supabase_database_url:
             return _async_postgresql_url(self.supabase_database_url)
             
+        # Use separate components and ensure password is URL-encoded
+        encoded_password = quote_plus(self.postgres_password)
         return (
-            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
+            f"postgresql+asyncpg://{self.postgres_user}:{encoded_password}"
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 

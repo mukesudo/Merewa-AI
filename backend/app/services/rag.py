@@ -16,13 +16,13 @@ try:
     import weaviate
     from weaviate.classes.config import Configure, DataType, Property
     from weaviate.classes.query import MetadataQuery
+    from weaviate.auth import AuthApiKey
 
     WEAVIATE_AVAILABLE = True
 except Exception:
     weaviate = None
     Configure = DataType = Property = MetadataQuery = None
     WEAVIATE_AVAILABLE = False
-
 
 
 settings = get_settings()
@@ -56,15 +56,28 @@ class RAGService:
             return self._client
 
         try:
-            # Connect to local Weaviate
-            self._client = weaviate.connect_to_local(
-                host=settings.weaviate_host or "127.0.0.1",
-                port=settings.weaviate_http_port,
-                grpc_port=settings.weaviate_grpc_port,
-                skip_init_checks=True,
-            )
+            if settings.weaviate_url:
+                # Connect to Weaviate Cloud
+                auth_config = None
+                if settings.weaviate_api_key:
+                    auth_config = AuthApiKey(api_key=settings.weaviate_api_key)
+                
+                self._client = weaviate.connect_to_weaviate_cloud(
+                    cluster_url=settings.weaviate_url,
+                    auth_credentials=auth_config,
+                    skip_init_checks=True,
+                )
+            else:
+                # Connect to local Weaviate
+                self._client = weaviate.connect_to_local(
+                    host=settings.weaviate_host or "127.0.0.1",
+                    port=settings.weaviate_http_port,
+                    grpc_port=settings.weaviate_grpc_port,
+                    skip_init_checks=True,
+                )
             return self._client
         except Exception:
+            # Fallback to None if connection fails
             return None
 
 
