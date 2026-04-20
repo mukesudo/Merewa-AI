@@ -7,9 +7,9 @@ import { username } from "better-auth/plugins/username";
 import { Pool } from "pg";
 
 const authDatabaseUrl =
-  process.env.BETTER_AUTH_DATABASE_URL ?? process.env.DATABASE_URL ?? null;
-const useSqliteFallback =
-  !authDatabaseUrl && process.env.NODE_ENV !== "production";
+  process.env.BETTER_AUTH_DATABASE_URL ?? process.env.DATABASE_URL;
+
+const isProduction = process.env.NODE_ENV === "production";
 
 const globalForAuth = globalThis as typeof globalThis & {
   merewaAuthPool?: Pool;
@@ -17,6 +17,7 @@ const globalForAuth = globalThis as typeof globalThis & {
 };
 
 function createAuthDatabase() {
+  // In production, we MUST have a database URL (Supabase)
   if (authDatabaseUrl) {
     const existingPool = globalForAuth.merewaAuthPool;
     if (existingPool) {
@@ -33,15 +34,14 @@ function createAuthDatabase() {
         : undefined,
     });
 
-    if (process.env.NODE_ENV !== "production") {
+    if (!isProduction) {
       globalForAuth.merewaAuthPool = pool;
     }
     return pool;
   }
 
-
-
-  if (useSqliteFallback) {
+  // Fallback to SQLite ONLY in development
+  if (!isProduction) {
     const existingDatabase = globalForAuth.merewaAuthSqlite;
     if (existingDatabase) {
       return existingDatabase;
@@ -53,8 +53,10 @@ function createAuthDatabase() {
     return sqlite;
   }
 
+  // If we get here in production, it's a configuration error
   throw new Error(
-    "BETTER_AUTH_DATABASE_URL or DATABASE_URL must be set for Better Auth in production.",
+    "FATAL: BETTER_AUTH_DATABASE_URL or DATABASE_URL is missing in production. " +
+    "Better Auth cannot fall back to SQLite on Vercel."
   );
 }
 
@@ -81,7 +83,7 @@ export const auth = betterAuth({
   appName: "Merewa",
   secret:
     process.env.BETTER_AUTH_SECRET ??
-    (process.env.NODE_ENV === "production"
+    (isProduction
       ? (() => {
           throw new Error("BETTER_AUTH_SECRET must be set in production.");
         })()
@@ -90,6 +92,10 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??
     "http://localhost:3000",
+  trustedOrigins: [
+    process.env.BETTER_AUTH_URL || "",
+    process.env.NEXT_PUBLIC_APP_URL || "",
+  ].filter(Boolean),
   database: createAuthDatabase(),
   emailAndPassword: {
     enabled: true,
