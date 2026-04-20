@@ -23,8 +23,14 @@ function createAuthDatabase() {
       return existingPool;
     }
 
+    const isSupabase = authDatabaseUrl.includes("supabase.co") || authDatabaseUrl.includes("supabase.com");
+    const hasSslMode = authDatabaseUrl.includes("sslmode=");
+
     const pool = new Pool({
       connectionString: authDatabaseUrl,
+      ssl: isSupabase || hasSslMode
+        ? { rejectUnauthorized: false }
+        : undefined,
     });
 
     if (process.env.NODE_ENV !== "production") {
@@ -32,6 +38,7 @@ function createAuthDatabase() {
     }
     return pool;
   }
+
 
 
   if (useSqliteFallback) {
