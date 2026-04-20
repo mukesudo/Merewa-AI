@@ -76,14 +76,13 @@ def _build_engine_kwargs() -> dict:
     if is_supabase or parsed.port == 6543:
         # 1. Disable asyncpg's internal statement cache
         connect_args["statement_cache_size"] = 0
-        # 2. Disable SQLAlchemy's internal prepared statement cache
-        engine_kwargs["prepared_statement_cache_size"] = 0
-        # 3. Disable SQLAlchemy internal pooling (Supavisor handles pooling)
+        # 2. Disable SQLAlchemy internal pooling (Supavisor handles pooling)
         engine_kwargs["poolclass"] = NullPool
-        # 4. Disable pre-ping as it uses prepared statements
+        # 3. Disable pre-ping as it uses prepared statements
         engine_kwargs["pool_pre_ping"] = False
     else:
         engine_kwargs["pool_pre_ping"] = True
+
 
     # --- Diagnostic logging (password masked) ---
     masked_password = "***" if parsed.password else "(empty)"
