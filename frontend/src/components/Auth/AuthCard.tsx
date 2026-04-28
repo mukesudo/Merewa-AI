@@ -21,12 +21,18 @@ const providers = [
   {
     id: "google",
     label: "Continue with Google",
-    enabled: Boolean(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID),
+    enabled: Boolean(
+      process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+      process.env.NEXT_PUBLIC_GOOGLE_ENABLED
+    ),
   },
   {
     id: "github",
     label: "Continue with GitHub",
-    enabled: Boolean(process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID),
+    enabled: Boolean(
+      process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID ||
+      process.env.NEXT_PUBLIC_GITHUB_ENABLED
+    ),
   },
 ] as const;
 

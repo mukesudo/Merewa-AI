@@ -4,6 +4,12 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["better-auth"],
   },
+  // Expose social provider availability to client-side code.
+  // We expose a boolean flag, NOT the actual secret client IDs.
+  env: {
+    NEXT_PUBLIC_GOOGLE_ENABLED: process.env.GOOGLE_CLIENT_ID ? "1" : "",
+    NEXT_PUBLIC_GITHUB_ENABLED: process.env.GITHUB_CLIENT_ID ? "1" : "",
+  },
   async rewrites() {
     return [
       {
