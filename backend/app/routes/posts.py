@@ -237,6 +237,20 @@ async def toggle_like(
     return LikeMutationResponse(liked=liked, like_count=post.like_count)
 
 
+@router.post("/posts/{post_id}/share")
+async def increment_share(
+    post_id: int,
+    actor: Optional[User] = Depends(get_optional_actor),
+    db: AsyncSession = Depends(get_db),
+):
+    post = await db.get(Post, post_id)
+    if post is None:
+        raise HTTPException(status_code=404, detail="Post not found")
+    post.share_count = (post.share_count or 0) + 1
+    await db.commit()
+    return {"share_count": post.share_count}
+
+
 @router.post("/upload")
 async def upload_media(
     file: UploadFile = File(...),

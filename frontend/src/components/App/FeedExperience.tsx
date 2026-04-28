@@ -1,8 +1,8 @@
 "use client";
 
-import { startTransition, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { fetchFeed, generateAiPost, getCurrentProfile } from "../../lib/api";
+import { fetchFeedPage } from "../../lib/api";
 import useStore from "../../store/useStore";
 import type {
   FeedResponse,
@@ -10,8 +10,7 @@ import type {
   Post,
   UserProfileResponse,
 } from "../../types/api";
-import { fallbackPersonalities, fallbackPosts } from "../../types/api";
-import AudioRecorder from "../Feed/AudioRecorder";
+import { fallbackPosts } from "../../types/api";
 import PostCard from "../Feed/Post";
 
 interface FeedExperienceProps {
@@ -26,15 +25,14 @@ export default function FeedExperience({
   currentUser,
 }: FeedExperienceProps) {
   const posts = useStore((state) => state.posts);
-  const personalities = useStore((state) => state.personalities);
   const setPosts = useStore((state) => state.setPosts);
-  const addPost = useStore((state) => state.addPost);
   const setPersonalities = useStore((state) => state.setPersonalities);
   const setCurrentUser = useStore((state) => state.setCurrentUser);
-  const statusMessage = useStore((state) => state.statusMessage);
-  const setStatusMessage = useStore((state) => state.setStatusMessage);
 
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [nextOffset, setNextOffset] = useState<number>(initialFeed.next_offset);
+  const [hasMore, setHasMore] = useState<boolean>(initialFeed.posts.length > 0);
+  const [isLoading, setIsLoading] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setCurrentUser(currentUser);
@@ -42,18 +40,39 @@ export default function FeedExperience({
     setPersonalities(initialPersonalities);
   }, [currentUser, initialFeed.posts, initialPersonalities, setCurrentUser, setPersonalities, setPosts]);
 
-  const refreshFeed = async () => {
+  const loadMore = useCallback(async () => {
+    if (isLoading || !hasMore) return;
+    setIsLoading(true);
     try {
-      const [feed, profile] = await Promise.all([fetchFeed(), getCurrentProfile()]);
-      setPosts(feed.posts);
-      setCurrentUser(profile);
-      setStatusMessage("Feed refreshed with current follow signals and profile state.");
+      const page = await fetchFeedPage({ offset: nextOffset, limit: 12 });
+      if (page.posts.length === 0) {
+        setHasMore(false);
+      } else {
+        setPosts([...useStore.getState().posts, ...page.posts]);
+        setNextOffset(page.next_offset);
+        if (page.next_offset === nextOffset) setHasMore(false);
+      }
     } catch {
-      setPosts(fallbackPosts);
-      setStatusMessage("Backend unavailable, showing fallback feed.");
+      setHasMore(false);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [hasMore, isLoading, nextOffset, setPosts]);
 
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          void loadMore();
+        }
+      },
+      { rootMargin: "400px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   const activePosts = posts.length ? posts : fallbackPosts;
 
@@ -64,9 +83,14 @@ export default function FeedExperience({
           {activePosts.map((post: Post) => (
             <PostCard key={post.id} post={post} />
           ))}
+          <div ref={sentinelRef} className="feed-sentinel" aria-hidden="true" />
+          {isLoading ? (
+            <p className="muted-text feed-loading">Loading more...</p>
+          ) : !hasMore && posts.length > 0 ? (
+            <p className="muted-text feed-loading">You&apos;re all caught up.</p>
+          ) : null}
         </div>
       </section>
-
     </div>
   );
 }

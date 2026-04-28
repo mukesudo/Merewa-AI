@@ -62,11 +62,9 @@ export default function AppShell({ currentUser, children }: AppShellProps) {
     <div className="app-shell" data-collapsed={isCollapsed}>
       <aside className="app-sidebar glass-panel">
         <div className="sidebar-brand">
-          {!isCollapsed && (
-            <Link href="/feed" className="brand-link center-all">
-              <h2 className="premium-gradient-text logo-large">Merewa</h2>
-            </Link>
-          )}
+          <Link href="/feed" className="brand-link">
+            <h2 className="logo-large">Merewa</h2>
+          </Link>
           <button
             className="btn sidebar-toggle-floating"
             onClick={toggleSidebar}

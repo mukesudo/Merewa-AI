@@ -81,6 +81,11 @@ class Settings(BaseSettings):
     default_viewer_id: int = 1
     fail_fast_startup: bool = False
 
+    # Internal scheduler (in-process) for daily AI content
+    enable_internal_scheduler: bool = False
+    daily_run_hour_utc: int = 5  # 08:00 Africa/Addis_Ababa == 05:00 UTC
+    daily_run_language: str = "am"
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _normalize_cors_origins(cls, value: Any) -> List[str]:

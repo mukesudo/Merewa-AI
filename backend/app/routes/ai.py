@@ -210,3 +210,56 @@ async def generate_script(request: GenerateScriptRequest):
         language=request.language,
     )
     return GenerateScriptResponse(script=content, language=request.language)
+
+
+@router.post("/daily-run/internal", response_model=DailyRunResponse)
+async def daily_run_internal(
+    db: AsyncSession = Depends(get_db),
+    language: str = "am",
+):
+    """
+    Internal endpoint for daily AI content generation.
+    Call via external cron (Vercel Cron, Render Cron, GitHub Actions, etc.).
+    No auth required — intended for internal use behind API gateway.
+    """
+    persona_keys = [persona.key for persona in ALL_PERSONAS]
+    generated = []
+
+    for persona_key in persona_keys:
+        persona = _safe_persona(persona_key)
+        topic = persona.default_topics[0]
+        context = await rag_service.search(query=topic, db=db, limit=2)
+        content = await llm_service.generate_post(
+            persona=persona,
+            topic=topic,
+            language=language,
+            context=context,
+        )
+        ai_user = await _resolve_persona_user(db, persona_key)
+        post = Post(
+            user_id=ai_user.id,
+            type="text",
+            content=content,
+            language=language,
+            origin="ai",
+            persona_key=persona_key,
+        )
+        db.add(post)
+        await db.flush()
+        generated.append(post.id)
+
+    await db.commit()
+
+    result = await db.execute(
+        select(Post)
+        .options(
+            selectinload(Post.author),
+            selectinload(Post.interactions).selectinload(Interaction.user),
+        )
+        .where(Post.id.in_(generated))
+    )
+    posts = result.scalars().unique().all()
+    for post in posts:
+        await rag_service.ingest_post(post)
+
+    return DailyRunResponse(generated=[serialize_post(post, set()) for post in posts])

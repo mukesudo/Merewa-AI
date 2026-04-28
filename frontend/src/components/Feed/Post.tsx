@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Heart, MessageCircleMore, Share2, Trash2, X } from "lucide-react";
 import { useI18n } from "../../lib/i18n";
 
-import { createComment, deletePost, toggleLike, uploadMedia } from "../../lib/api";
+import { createComment, deletePost, sharePost, toggleLike, uploadMedia } from "../../lib/api";
 import useStore from "../../store/useStore";
 import type { Comment, Post as PostModel } from "../../types/api";
 
@@ -22,6 +22,7 @@ export default function Post({ post }: PostProps) {
 
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.like_count);
+  const [sharesCount, setSharesCount] = useState(post.share_count ?? 0);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>(post.comments || []);
   const [isInView, setIsInView] = useState(false);
@@ -123,20 +124,25 @@ export default function Post({ post }: PostProps) {
   const handleShare = async () => {
     const url = `${window.location.origin}/profile/${post.author}`;
     const text = `Check out this voice post by @${post.author} on Merewa!`;
-    
+
+    setSharesCount((v) => v + 1);
+    sharePost(post.id)
+      .then((res) => setSharesCount(res.share_count))
+      .catch(() => setSharesCount((v) => Math.max(0, v - 1)));
+
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: "Merewa Post",
-          text,
-          url,
-        });
+        await navigator.share({ title: "Merewa Post", text, url });
+        return;
       } catch {
-        // Fallback to clipboard
+        // user cancelled or unsupported → fall through to clipboard
       }
-    } else {
+    }
+    try {
       await navigator.clipboard.writeText(`${text} ${url}`);
       alert("Link copied to clipboard!");
+    } catch {
+      // ignore
     }
   };
 
@@ -206,7 +212,7 @@ export default function Post({ post }: PostProps) {
             <div className="action-icon-bg glass-panel">
               <Share2 size={24} />
             </div>
-            <span>{t("share")}</span>
+            <span>{sharesCount > 0 ? sharesCount : t("share")}</span>
           </button>
         </div>
       </div>

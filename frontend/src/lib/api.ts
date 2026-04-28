@@ -37,6 +37,21 @@ export function fetchFeed(): Promise<FeedResponse> {
   return request<FeedResponse>("/posts?limit=12");
 }
 
+export function fetchFeedPage(params: {
+  offset: number;
+  limit?: number;
+}): Promise<FeedResponse> {
+  const limit = params.limit ?? 12;
+  return request<FeedResponse>(`/posts?limit=${limit}&offset=${params.offset}`);
+}
+
+export function sharePost(postId: number): Promise<{ share_count: number }> {
+  return request<{ share_count: number }>(`/posts/${postId}/share`, {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
 export function fetchPersonalities(): Promise<Personality[]> {
   return request<Personality[]>("/ai/personalities");
 }

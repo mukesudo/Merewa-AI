@@ -14,7 +14,7 @@ class OllamaService:
     def __init__(self) -> None:
         self.base_url = settings.ollama_base_url.rstrip("/")
         self.default_model = settings.ollama_model
-        self.timeout_seconds = settings.ollama_timeout_seconds
+        self.timeout_seconds = settings.llm_timeout_seconds
 
     async def generate_post(
         self,

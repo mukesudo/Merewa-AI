@@ -92,10 +92,21 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL ??
     process.env.NEXT_PUBLIC_APP_URL ??
     "http://localhost:3000",
-  trustedOrigins: [
-    process.env.BETTER_AUTH_URL || "",
-    process.env.NEXT_PUBLIC_APP_URL || "",
-  ].filter(Boolean),
+  trustedOrigins: Array.from(
+    new Set(
+      [
+        process.env.BETTER_AUTH_URL,
+        process.env.NEXT_PUBLIC_APP_URL,
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+      ]
+        .filter(Boolean)
+        .flatMap((url) => {
+          const u = new URL(url as string);
+          return [`${u.protocol}//${u.hostname}:${u.port}`, `${u.protocol}//localhost:${u.port}`, `${u.protocol}//127.0.0.1:${u.port}`];
+        }),
+    ),
+  ),
   database: createAuthDatabase(),
   emailAndPassword: {
     enabled: true,
