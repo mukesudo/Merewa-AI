@@ -23,6 +23,8 @@ from ..services.feed import serialize_comment, serialize_post
 from ..services.llm import llm_service
 from ..services.personas import ALL_PERSONAS, get_persona
 from ..services.rag import rag_service
+from ..services.storage import storage_service
+from ..services.tts import tts_service
 
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -88,10 +90,23 @@ async def generate_post(request: GeneratePostRequest, db: AsyncSession = Depends
     published_post = None
     if request.publish:
         ai_user = await _resolve_persona_user(db, request.persona_key)
+
+        audio_url: str | None = None
+        if tts_service.enabled:
+            audio_bytes = await tts_service.synthesize(content, language=request.language)
+            if audio_bytes:
+                audio_url = await storage_service.store_upload(
+                    content=audio_bytes,
+                    filename=f"ai_{request.persona_key}.mp3",
+                    content_type="audio/mpeg",
+                    folder="audio",
+                )
+
         post = Post(
             user_id=ai_user.id,
-            type="text",
+            type="audio" if audio_url else "text",
             content=content,
+            media_url=audio_url,
             language=request.language,
             origin="ai",
             persona_key=request.persona_key,
@@ -174,10 +189,23 @@ async def daily_run(request: DailyRunRequest, db: AsyncSession = Depends(get_db)
             context=context,
         )
         ai_user = await _resolve_persona_user(db, persona_key)
+
+        audio_url: str | None = None
+        if tts_service.enabled:
+            audio_bytes = await tts_service.synthesize(content, language=request.language)
+            if audio_bytes:
+                audio_url = await storage_service.store_upload(
+                    content=audio_bytes,
+                    filename=f"ai_{persona_key}.mp3",
+                    content_type="audio/mpeg",
+                    folder="audio",
+                )
+
         post = Post(
             user_id=ai_user.id,
-            type="text",
+            type="audio" if audio_url else "text",
             content=content,
+            media_url=audio_url,
             language=request.language,
             origin="ai",
             persona_key=persona_key,
@@ -236,10 +264,23 @@ async def daily_run_internal(
             context=context,
         )
         ai_user = await _resolve_persona_user(db, persona_key)
+
+        audio_url: str | None = None
+        if tts_service.enabled:
+            audio_bytes = await tts_service.synthesize(content, language=language)
+            if audio_bytes:
+                audio_url = await storage_service.store_upload(
+                    content=audio_bytes,
+                    filename=f"ai_{persona_key}.mp3",
+                    content_type="audio/mpeg",
+                    folder="audio",
+                )
+
         post = Post(
             user_id=ai_user.id,
-            type="text",
+            type="audio" if audio_url else "text",
             content=content,
+            media_url=audio_url,
             language=language,
             origin="ai",
             persona_key=persona_key,

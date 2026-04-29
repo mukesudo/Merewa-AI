@@ -57,6 +57,8 @@ class Settings(BaseSettings):
     ollama_base_url: str = "http://127.0.0.1:11434"
     ollama_model: str = "gemma2:2b"
 
+    google_tts_api_key: Optional[str] = None
+
     redis_url: Optional[str] = None
     upstash_redis_url: Optional[str] = None
     internal_api_token: Optional[str] = None
