@@ -1,8 +1,10 @@
 import re
 from typing import Optional
 
+from asyncpg import UniqueViolationError
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
@@ -129,6 +131,21 @@ async def _sync_actor_from_headers(
         try:
             await db.commit()
             await db.refresh(actor)
+        except IntegrityError as exc:
+            await db.rollback()
+            # Parallel request already inserted this user — re-fetch and return it
+            orig = exc.orig
+            is_unique = isinstance(orig, UniqueViolationError) or (
+                orig is not None and "unique" in str(orig).lower()
+            )
+            if is_unique:
+                result = await db.execute(
+                    select(User).where(User.external_auth_id == external_auth_id)
+                )
+                actor = result.scalar_one_or_none()
+                if actor is not None:
+                    return actor
+            raise HTTPException(status_code=500, detail=str(exc))
         except Exception as exc:
             await db.rollback()
             raise HTTPException(status_code=500, detail=str(exc))
