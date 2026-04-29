@@ -97,8 +97,8 @@ async def generate_post(request: GeneratePostRequest, db: AsyncSession = Depends
             if audio_bytes:
                 audio_url = await storage_service.store_upload(
                     content=audio_bytes,
-                    filename=f"ai_{request.persona_key}.mp3",
-                    content_type="audio/mpeg",
+                    filename=f"ai_{request.persona_key}.wav",
+                    content_type="audio/wav",
                     folder="audio",
                 )
 
@@ -196,8 +196,8 @@ async def daily_run(request: DailyRunRequest, db: AsyncSession = Depends(get_db)
             if audio_bytes:
                 audio_url = await storage_service.store_upload(
                     content=audio_bytes,
-                    filename=f"ai_{persona_key}.mp3",
-                    content_type="audio/mpeg",
+                    filename=f"ai_{persona_key}.wav",
+                    content_type="audio/wav",
                     folder="audio",
                 )
 
@@ -271,8 +271,8 @@ async def daily_run_internal(
             if audio_bytes:
                 audio_url = await storage_service.store_upload(
                     content=audio_bytes,
-                    filename=f"ai_{persona_key}.mp3",
-                    content_type="audio/mpeg",
+                    filename=f"ai_{persona_key}.wav",
+                    content_type="audio/wav",
                     folder="audio",
                 )
 
